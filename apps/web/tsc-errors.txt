@@ -1,0 +1,452 @@
+[96m.next/dev/types/validator.ts[0m:[93m279[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/admin/media/[id]/approve/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/admin/media/[id]/approve">'.
+  Types of property 'PATCH' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ message: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m279[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/admin/media/[id]/approve/route.ts[0m:[93m9[0m:[93m27[0m
+    [7m9[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/dev/types/validator.ts[0m:[93m288[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/admin/media/[id]/reject/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/admin/media/[id]/reject">'.
+  Types of property 'PATCH' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ message: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m288[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/admin/media/[id]/reject/route.ts[0m:[93m9[0m:[93m27[0m
+    [7m9[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/dev/types/validator.ts[0m:[93m378[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/collections/[id]/items/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/collections/[id]/items">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ message: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m378[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/collections/[id]/items/route.ts[0m:[93m9[0m:[93m27[0m
+    [7m9[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/dev/types/validator.ts[0m:[93m405[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/photos/[id]/download/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/photos/[id]/download">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ url: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m405[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/photos/[id]/download/route.ts[0m:[93m9[0m:[93m27[0m
+    [7m9[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/dev/types/validator.ts[0m:[93m414[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/photos/[id]/like/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/photos/[id]/like">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ liked: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m414[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/photos/[id]/like/route.ts[0m:[93m47[0m:[93m27[0m
+    [7m47[0m   { params }: { params: { id: string } }
+    [7m  [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/dev/types/validator.ts[0m:[93m423[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/photos/[id]/view/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/photos/[id]/view">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ ok: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m423[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/photos/[id]/view/route.ts[0m:[93m7[0m:[93m27[0m
+    [7m7[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/dev/types/validator.ts[0m:[93m459[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/users/[username]/follow/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/users/[username]/follow">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { username: string; }; }) => Promise<NextResponse<{ following: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ username: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ username: string; }>; }' is not assignable to type '{ params: { username: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'username' is missing in type 'Promise<{ username: string; }>' but required in type '{ username: string; }'.
+
+[7m459[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/users/[username]/follow/route.ts[0m:[93m51[0m:[93m27[0m
+    [7m51[0m   { params }: { params: { username: string } }
+    [7m  [0m [96m                          ~~~~~~~~[0m
+    'username' is declared here.
+
+[96m.next/dev/types/validator.ts[0m:[93m486[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/v1/photos/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/v1/photos/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ id: string; width: number; height: number; url: string; photographer: string; ... 5 more ...; src: { ...; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m486[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/v1/photos/[id]/route.ts[0m:[93m8[0m:[93m27[0m
+    [7m8[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/types/validator.ts[0m:[93m279[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/admin/media/[id]/approve/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/admin/media/[id]/approve">'.
+  Types of property 'PATCH' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ message: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m279[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/admin/media/[id]/approve/route.ts[0m:[93m9[0m:[93m27[0m
+    [7m9[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/types/validator.ts[0m:[93m288[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/admin/media/[id]/reject/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/admin/media/[id]/reject">'.
+  Types of property 'PATCH' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ message: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m288[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/admin/media/[id]/reject/route.ts[0m:[93m9[0m:[93m27[0m
+    [7m9[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/types/validator.ts[0m:[93m360[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/collections/[id]/items/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/collections/[id]/items">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ message: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m360[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/collections/[id]/items/route.ts[0m:[93m9[0m:[93m27[0m
+    [7m9[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/types/validator.ts[0m:[93m387[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/photos/[id]/download/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/photos/[id]/download">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ url: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m387[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/photos/[id]/download/route.ts[0m:[93m9[0m:[93m27[0m
+    [7m9[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/types/validator.ts[0m:[93m396[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/photos/[id]/like/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/photos/[id]/like">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ liked: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m396[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/photos/[id]/like/route.ts[0m:[93m47[0m:[93m27[0m
+    [7m47[0m   { params }: { params: { id: string } }
+    [7m  [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/types/validator.ts[0m:[93m405[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/photos/[id]/view/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/photos/[id]/view">'.
+  Types of property 'POST' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ ok: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m405[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/photos/[id]/view/route.ts[0m:[93m7[0m:[93m27[0m
+    [7m7[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96m.next/types/validator.ts[0m:[93m441[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/internal/users/[username]/follow/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/internal/users/[username]/follow">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { username: string; }; }) => Promise<NextResponse<{ following: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ username: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ username: string; }>; }' is not assignable to type '{ params: { username: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'username' is missing in type 'Promise<{ username: string; }>' but required in type '{ username: string; }'.
+
+[7m441[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/internal/users/[username]/follow/route.ts[0m:[93m51[0m:[93m27[0m
+    [7m51[0m   { params }: { params: { username: string } }
+    [7m  [0m [96m                          ~~~~~~~~[0m
+    'username' is declared here.
+
+[96m.next/types/validator.ts[0m:[93m468[0m:[93m31[0m - [91merror[0m[90m TS2344: [0mType 'typeof import("D:/Pexels/apps/web/src/app/api/v1/photos/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/v1/photos/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ id: string; width: number; height: number; url: string; photographer: string; ... 5 more ...; src: { ...; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+[7m468[0m   type __Check = __IsExpected<typeof handler>
+[7m   [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+  [96msrc/app/api/v1/photos/[id]/route.ts[0m:[93m8[0m:[93m27[0m
+    [7m8[0m   { params }: { params: { id: string } }
+    [7m [0m [96m                          ~~[0m
+    'id' is declared here.
+
+[96msrc/app/api/admin/reports/[id]/route.ts[0m:[93m156[0m:[93m18[0m - [91merror[0m[90m TS2339: [0mProperty 'moderationDecision' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+
+[7m156[0m     await prisma.moderationDecision.create({
+[7m   [0m [91m                 ~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/app/collections/[id]/CollectionDetailClient.tsx[0m:[93m63[0m:[93m18[0m - [91merror[0m[90m TS2322: [0mType '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: "sm"; }' is not assignable to type 'IntrinsicAttributes & ModalProps'.
+  Property 'isOpen' does not exist on type 'IntrinsicAttributes & ModalProps'. Did you mean 'open'?
+
+[7m63[0m           <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Delete Collection" size="sm">
+[7m  [0m [91m                 ~~~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m41[0m:[93m54[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'title' does not exist in type 'PhotoSelect<DefaultArgs>'.
+
+[7m41[0m             photo: { select: { id: true, slug: true, title: true, altText: true, originalUrl: true, thumbnailUrl: true, dominantColor: true, width: true, height: true } },
+[7m  [0m [91m                                                     ~~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m42[0m:[93m54[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'title' does not exist in type 'VideoSelect<DefaultArgs>'.
+
+[7m42[0m             video: { select: { id: true, slug: true, title: true, thumbnailUrl: true } },
+[7m  [0m [91m                                                     ~~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m77[0m:[93m50[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type '{ id: string; coverUrl: string | null; createdAt: Date; updatedAt: Date; userId: string; slug: string | null; description: string | null; viewsCount: number; title: string; isPrivate: boolean; isSystem: boolean; systemType: string | null; itemsCount: number; }'.
+
+[7m77[0m               <Link href={`/profile/${collection.user.username}`} className="flex items-center gap-2 group">
+[7m  [0m [91m                                                 ~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m78[0m:[93m41[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type '{ id: string; coverUrl: string | null; createdAt: Date; updatedAt: Date; userId: string; slug: string | null; description: string | null; viewsCount: number; title: string; isPrivate: boolean; isSystem: boolean; systemType: string | null; itemsCount: number; }'.
+
+[7m78[0m                 <Avatar src={collection.user.avatarUrl} name={collection.user.displayName || collection.user.username} size="sm" />
+[7m  [0m [91m                                        ~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m78[0m:[93m74[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type '{ id: string; coverUrl: string | null; createdAt: Date; updatedAt: Date; userId: string; slug: string | null; description: string | null; viewsCount: number; title: string; isPrivate: boolean; isSystem: boolean; systemType: string | null; itemsCount: number; }'.
+
+[7m78[0m                 <Avatar src={collection.user.avatarUrl} name={collection.user.displayName || collection.user.username} size="sm" />
+[7m  [0m [91m                                                                         ~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m78[0m:[93m105[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type '{ id: string; coverUrl: string | null; createdAt: Date; updatedAt: Date; userId: string; slug: string | null; description: string | null; viewsCount: number; title: string; isPrivate: boolean; isSystem: boolean; systemType: string | null; itemsCount: number; }'.
+
+[7m78[0m                 <Avatar src={collection.user.avatarUrl} name={collection.user.displayName || collection.user.username} size="sm" />
+[7m  [0m [91m                                                                                                        ~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m79[0m:[93m118[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type '{ id: string; coverUrl: string | null; createdAt: Date; updatedAt: Date; userId: string; slug: string | null; description: string | null; viewsCount: number; title: string; isPrivate: boolean; isSystem: boolean; systemType: string | null; itemsCount: number; }'.
+
+[7m79[0m                 <span className="text-caption text-surface-600 group-hover:text-brand transition-colors">{collection.user.displayName || collection.user.username}</span>
+[7m  [0m [91m                                                                                                                     ~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m79[0m:[93m149[0m - [91merror[0m[90m TS2339: [0mProperty 'user' does not exist on type '{ id: string; coverUrl: string | null; createdAt: Date; updatedAt: Date; userId: string; slug: string | null; description: string | null; viewsCount: number; title: string; isPrivate: boolean; isSystem: boolean; systemType: string | null; itemsCount: number; }'.
+
+[7m79[0m                 <span className="text-caption text-surface-600 group-hover:text-brand transition-colors">{collection.user.displayName || collection.user.username}</span>
+[7m  [0m [91m                                                                                                                                                    ~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m89[0m:[93m21[0m - [91merror[0m[90m TS2339: [0mProperty 'items' does not exist on type '{ id: string; coverUrl: string | null; createdAt: Date; updatedAt: Date; userId: string; slug: string | null; description: string | null; viewsCount: number; title: string; isPrivate: boolean; isSystem: boolean; systemType: string | null; itemsCount: number; }'.
+
+[7m89[0m         {collection.items.length === 0 ? (
+[7m  [0m [91m                    ~~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m99[0m:[93m25[0m - [91merror[0m[90m TS2339: [0mProperty 'items' does not exist on type '{ id: string; coverUrl: string | null; createdAt: Date; updatedAt: Date; userId: string; slug: string | null; description: string | null; viewsCount: number; title: string; isPrivate: boolean; isSystem: boolean; systemType: string | null; itemsCount: number; }'.
+
+[7m99[0m             {collection.items.map((item) => {
+[7m  [0m [91m                        ~~~~~[0m
+
+[96msrc/app/collections/[id]/page.tsx[0m:[93m99[0m:[93m36[0m - [91merror[0m[90m TS7006: [0mParameter 'item' implicitly has an 'any' type.
+
+[7m99[0m             {collection.items.map((item) => {
+[7m  [0m [91m                                   ~~~~[0m
+
+[96msrc/app/collections/page.tsx[0m:[93m106[0m:[93m23[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'label' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<...>'.
+
+[7m106[0m             action={{ label: "Create Collection", onClick: () => setShowCreate(true) }}
+[7m   [0m [91m                      ~~~~~[0m
+
+  [96msrc/components/ui/EmptyState.tsx[0m:[93m7[0m:[93m3[0m
+    [7m7[0m   action?: ReactNode;
+    [7m [0m [96m  ~~~~~~[0m
+    The expected type comes from property 'action' which is declared here on type 'IntrinsicAttributes & EmptyStateProps'
+
+[96msrc/app/collections/page.tsx[0m:[93m138[0m:[93m16[0m - [91merror[0m[90m TS2322: [0mType '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: "md"; }' is not assignable to type 'IntrinsicAttributes & ModalProps'.
+  Property 'isOpen' does not exist on type 'IntrinsicAttributes & ModalProps'. Did you mean 'open'?
+
+[7m138[0m         <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create Collection" size="md">
+[7m   [0m [91m               ~~~~~~[0m
+
+[96msrc/app/loading.tsx[0m:[93m11[0m:[93m31[0m - [91merror[0m[90m TS2322: [0mType '"rect"' is not assignable to type '"text" | "circular" | "rectangular" | "card" | undefined'.
+
+[7m11[0m             <Skeleton key={i} variant="rect" className="w-full h-64 rounded-xl" />
+[7m  [0m [91m                              ~~~~~~~[0m
+
+  [96msrc/components/ui/Skeleton.tsx[0m:[93m5[0m:[93m3[0m
+    [7m5[0m   variant?: "text" | "circular" | "rectangular" | "card";
+    [7m [0m [96m  ~~~~~~~[0m
+    The expected type comes from property 'variant' which is declared here on type 'IntrinsicAttributes & SkeletonProps'
+
+[96msrc/app/page.tsx[0m:[93m19[0m:[93m16[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'isPublic' does not exist in type 'CollectionWhereInput'.
+
+[7m19[0m       where: { isPublic: true },
+[7m  [0m [91m               ~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m62[0m:[93m23[0m - [91merror[0m[90m TS2339: [0mProperty 'storageKey' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m62[0m     openGraph: photo?.storageKey ? {
+[7m  [0m [91m                      ~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m63[0m:[93m67[0m - [91merror[0m[90m TS2339: [0mProperty 'storageKey' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m63[0m       images: [{ url: `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.storageKey}`, width: photo.width, height: photo.height }],
+[7m  [0m [91m                                                                  ~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m79[0m:[93m20[0m - [91merror[0m[90m TS2339: [0mProperty 'storageKey' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m79[0m         src: photo.storageKey
+[7m  [0m [91m                   ~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m80[0m:[93m57[0m - [91merror[0m[90m TS2339: [0mProperty 'storageKey' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m80[0m           ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.storageKey}`
+[7m  [0m [91m                                                        ~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m95[0m:[93m23[0m - [91merror[0m[90m TS2339: [0mProperty 'cameraMake' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m95[0m         camera: photo.cameraMake && photo.cameraModel ? `${photo.cameraMake} ${photo.cameraModel}` : null,
+[7m  [0m [91m                      ~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m95[0m:[93m43[0m - [91merror[0m[90m TS2339: [0mProperty 'cameraModel' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m95[0m         camera: photo.cameraMake && photo.cameraModel ? `${photo.cameraMake} ${photo.cameraModel}` : null,
+[7m  [0m [91m                                          ~~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m95[0m:[93m66[0m - [91merror[0m[90m TS2339: [0mProperty 'cameraMake' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m95[0m         camera: photo.cameraMake && photo.cameraModel ? `${photo.cameraMake} ${photo.cameraModel}` : null,
+[7m  [0m [91m                                                                 ~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m95[0m:[93m86[0m - [91merror[0m[90m TS2339: [0mProperty 'cameraModel' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m95[0m         camera: photo.cameraMake && photo.cameraModel ? `${photo.cameraMake} ${photo.cameraModel}` : null,
+[7m  [0m [91m                                                                                     ~~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m96[0m:[93m20[0m - [91merror[0m[90m TS2339: [0mProperty 'iso' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m96[0m         iso: photo.iso,
+[7m  [0m [91m                   ~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m97[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'focalLength' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m97[0m         focalLength: photo.focalLength,
+[7m  [0m [91m                           ~~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m98[0m:[93m25[0m - [91merror[0m[90m TS2339: [0mProperty 'aperture' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m98[0m         aperture: photo.aperture,
+[7m  [0m [91m                        ~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m99[0m:[93m29[0m - [91merror[0m[90m TS2339: [0mProperty 'shutterSpeed' does not exist on type '{ user: { id: string; username: string; displayName: string | null; bio: string | null; avatarUrl: string | null; followersCount: number; }; tags: ({ tag: { name: string; id: string; createdAt: Date; slug: string; isCurated: boolean; photosCount: number; videosCount: number; }; } & { ...; })[]; _count: { ...; }; } &...'.
+
+[7m99[0m         shutterSpeed: photo.shutterSpeed,
+[7m  [0m [91m                            ~~~~~~~~~~~~[0m
+
+[96msrc/app/photo/[slug]/page.tsx[0m:[93m118[0m:[93m29[0m - [91merror[0m[90m TS2322: [0mType '{ id: string; title: string; src: string; width: number; height: number; photographer: { username: string; displayName: string; avatarUrl: string | null; bio: string | null; followersCount: number; }; ... 9 more ...; dominantColor: string | null; } | { ...; }' is not assignable to type 'PhotoData'.
+  Type '{ id: string; title: string; src: string; width: number; height: number; photographer: { username: string; displayName: string; avatarUrl: string | null; bio: string | null; followersCount: number; }; ... 9 more ...; dominantColor: string | null; }' is not assignable to type 'PhotoData'.
+    Types of property 'views' are incompatible.
+      Type 'bigint' is not assignable to type 'number'.
+
+[7m118[0m   return <PhotoDetailClient photo={photoData} relatedPhotos={relatedPhotos} />;
+[7m   [0m [91m                            ~~~~~[0m
+
+  [96msrc/app/photo/[slug]/PhotoDetailClient.tsx[0m:[93m39[0m:[93m3[0m
+    [7m39[0m   photo: PhotoData;
+    [7m  [0m [96m  ~~~~~[0m
+    The expected type comes from property 'photo' which is declared here on type 'IntrinsicAttributes & { photo: PhotoData; relatedPhotos: any[]; }'
+
+[96msrc/app/settings/page.tsx[0m:[93m340[0m:[93m16[0m - [91merror[0m[90m TS2322: [0mType '{ children: Element; isOpen: boolean; onClose: () => void; title: string; size: "sm"; }' is not assignable to type 'IntrinsicAttributes & ModalProps'.
+  Property 'isOpen' does not exist on type 'IntrinsicAttributes & ModalProps'. Did you mean 'open'?
+
+[7m340[0m         <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Account" size="sm">
+[7m   [0m [91m               ~~~~~~[0m
+
+[96msrc/lib/audit.ts[0m:[93m19[0m:[93m18[0m - [91merror[0m[90m TS2339: [0mProperty 'auditLog' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+
+[7m19[0m     await prisma.auditLog.create({
+[7m  [0m [91m                 ~~~~~~~~[0m
+
+
+Found 48 errors in 11 files.
+
+Errors  Files
+     8  .next/dev/types/validator.ts[90m:279[0m
+     8  .next/types/validator.ts[90m:279[0m
+     1  src/app/api/admin/reports/[id]/route.ts[90m:156[0m
+     1  src/app/collections/[id]/CollectionDetailClient.tsx[90m:63[0m
+    11  src/app/collections/[id]/page.tsx[90m:41[0m
+     2  src/app/collections/page.tsx[90m:106[0m
+     1  src/app/loading.tsx[90m:11[0m
+     1  src/app/page.tsx[90m:19[0m
+    13  src/app/photo/[slug]/page.tsx[90m:62[0m
+     1  src/app/settings/page.tsx[90m:340[0m
+     1  src/lib/audit.ts[90m:19[0m

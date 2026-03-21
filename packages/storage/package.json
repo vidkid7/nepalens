@@ -1,0 +1,18 @@
+{
+  "name": "@pixelstock/storage",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.490.0",
+    "@aws-sdk/s3-request-presigner": "^3.490.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

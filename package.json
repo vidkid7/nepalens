@@ -1,0 +1,30 @@
+{
+  "name": "pixelstock",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "db:generate": "npm run generate --workspace=@pixelstock/database",
+    "db:migrate": "npm run migrate --workspace=@pixelstock/database",
+    "db:seed": "npm run seed --workspace=@pixelstock/database",
+    "db:push": "npm run push --workspace=@pixelstock/database"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "npm@10.2.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "next": "^16.1.6",
+    "pg": "^8.20.0"
+  }
+}

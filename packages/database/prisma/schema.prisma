@@ -1,0 +1,539 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// USERS
+// =============================================
+model User {
+  id             String    @id @default(cuid())
+  username       String    @unique
+  email          String    @unique
+  passwordHash   String?
+  displayName    String?
+  bio            String?   @db.Text
+  location       String?
+  websiteUrl     String?
+  avatarUrl      String?
+  coverUrl       String?
+  paypalEmail    String?
+  isVerified     Boolean   @default(false)
+  isContributor  Boolean   @default(false)
+  isAdmin        Boolean   @default(false)
+  isBanned       Boolean   @default(false)
+  oauthProvider  String?
+  oauthUid       String?
+  followersCount Int       @default(0)
+  followingCount Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLoginAt    DateTime?
+
+  photos      Photo[]
+  videos      Video[]
+  collections Collection[]
+  likes       Like[]
+  downloads   Download[]
+  apiKeys     ApiKey[]
+  followers   Follow[]    @relation("following")
+  following   Follow[]    @relation("follower")
+  reports     Report[]    @relation("reporter")
+  heroImages  HeroImage[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  moderationDecisions  ModerationDecision[] @relation("moderationDecisions")
+
+  @@map("users")
+}
+
+// =============================================
+// PHOTOS
+// =============================================
+model Photo {
+  id              String    @id @default(cuid())
+  userId          String
+  slug            String
+  altText         String?   @db.VarChar(500)
+  description     String?   @db.Text
+  width           Int
+  height          Int
+  megapixels      Float?
+  fileSizeBytes   BigInt?
+  originalUrl     String
+  cdnKey          String?
+  dominantColor   String?   @db.VarChar(7)
+  colorBucket     String?   @db.VarChar(20)
+  avgColor        String?   @db.VarChar(7)
+  blurHash        String?   @db.VarChar(100)
+  orientation     String?   @db.VarChar(10)
+  sizeTier        String?   @db.VarChar(10)
+  exifCamera      String?
+  exifLens        String?
+  exifIso         Int?
+  exifAperture    String?
+  exifShutter     String?
+  exifFocalLen    String?
+  locationName    String?
+  status          String    @default("pending")
+  isFeatured      Boolean   @default(false)
+  isCurated       Boolean   @default(false)
+  featuredAt      DateTime?
+  curatedAt       DateTime?
+  viewsCount      BigInt    @default(0)
+  downloadsCount  BigInt    @default(0)
+  likesCount      Int       @default(0)
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  tags            PhotoTag[]
+  likes           Like[]           @relation("photoLikes")
+  downloads       Download[]       @relation("photoDownloads")
+  collectionItems CollectionItem[] @relation("photoCollectionItems")
+  heroImages      HeroImage[]
+  reports         Report[]         @relation("photoReports")
+
+  @@index([userId])
+  @@index([status])
+  @@index([isFeatured])
+  @@index([createdAt(sort: Desc)])
+  @@index([colorBucket])
+  @@index([orientation])
+  @@map("photos")
+}
+
+// =============================================
+// VIDEOS
+// =============================================
+model Video {
+  id              String    @id @default(cuid())
+  userId          String
+  slug            String
+  altText         String?   @db.VarChar(500)
+  description     String?   @db.Text
+  width           Int
+  height          Int
+  durationSeconds Int?
+  frameRate       Float?
+  thumbnailUrl    String?
+  blurHash        String?   @db.VarChar(100)
+  orientation     String?   @db.VarChar(10)
+  status          String    @default("pending")
+  isFeatured      Boolean   @default(false)
+  viewsCount      BigInt    @default(0)
+  downloadsCount  BigInt    @default(0)
+  likesCount      Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  files           VideoFile[]
+  tags            VideoTag[]
+  likes           Like[]           @relation("videoLikes")
+  downloads       Download[]       @relation("videoDownloads")
+  collectionItems CollectionItem[] @relation("videoCollectionItems")
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("videos")
+}
+
+// =============================================
+// VIDEO FILES (multiple resolution variants)
+// =============================================
+model VideoFile {
+  id       String @id @default(cuid())
+  videoId  String
+  quality  String @db.VarChar(10)
+  fileType String @db.VarChar(10)
+  width    Int
+  height   Int
+  fps      Float?
+  fileSize BigInt?
+  cdnUrl   String
+
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([videoId])
+  @@map("video_files")
+}
+
+// =============================================
+// TAGS
+// =============================================
+model Tag {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  photosCount Int        @default(0)
+  videosCount Int        @default(0)
+  isCurated   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+
+  photos PhotoTag[]
+  videos VideoTag[]
+
+  @@index([name])
+  @@index([slug])
+  @@map("tags")
+}
+
+// =============================================
+// PHOTO_TAGS & VIDEO_TAGS (join tables)
+// =============================================
+model PhotoTag {
+  photoId String
+  tagId   String
+  isAiGen Boolean @default(false)
+
+  photo Photo @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([photoId, tagId])
+  @@map("photo_tags")
+}
+
+model VideoTag {
+  videoId String
+  tagId   String
+
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([videoId, tagId])
+  @@map("video_tags")
+}
+
+// =============================================
+// COLLECTIONS
+// =============================================
+model Collection {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?  @db.Text
+  slug        String?
+  coverUrl    String?
+  isPrivate   Boolean  @default(false)
+  isSystem    Boolean  @default(false)
+  systemType  String?  @db.VarChar(20)
+  itemsCount  Int      @default(0)
+  viewsCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CollectionItem[]
+
+  @@index([userId])
+  @@map("collections")
+}
+
+// =============================================
+// COLLECTION ITEMS
+// =============================================
+model CollectionItem {
+  id           String   @id @default(cuid())
+  collectionId String
+  mediaType    String   @db.VarChar(10)
+  mediaId      String
+  position     Int      @default(0)
+  addedAt      DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  photo      Photo?     @relation("photoCollectionItems", fields: [mediaId], references: [id], map: "collection_items_photo_fkey")
+  video      Video?     @relation("videoCollectionItems", fields: [mediaId], references: [id], map: "collection_items_video_fkey")
+
+  @@unique([collectionId, mediaType, mediaId])
+  @@map("collection_items")
+}
+
+// =============================================
+// LIKES
+// =============================================
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  mediaType String   @db.VarChar(10)
+  mediaId   String
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photo Photo? @relation("photoLikes", fields: [mediaId], references: [id], map: "likes_photo_fkey")
+  video Video? @relation("videoLikes", fields: [mediaId], references: [id], map: "likes_video_fkey")
+
+  @@unique([userId, mediaType, mediaId])
+  @@index([mediaType, mediaId])
+  @@map("likes")
+}
+
+// =============================================
+// DOWNLOADS (analytics log)
+// =============================================
+model Download {
+  id          String   @id @default(cuid())
+  mediaType   String   @db.VarChar(10)
+  mediaId     String
+  userId      String?
+  ipAddress   String?
+  userAgent   String?  @db.VarChar(500)
+  source      String?  @db.VarChar(50)
+  apiKeyId    String?
+  sizeVariant String?  @db.VarChar(20)
+  createdAt   DateTime @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  photo Photo? @relation("photoDownloads", fields: [mediaId], references: [id], map: "downloads_photo_fkey")
+  video Video? @relation("videoDownloads", fields: [mediaId], references: [id], map: "downloads_video_fkey")
+
+  @@index([mediaType, mediaId])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("downloads")
+}
+
+// =============================================
+// FOLLOWS
+// =============================================
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@map("follows")
+}
+
+// =============================================
+// CATEGORIES
+// =============================================
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  iconUrl     String?
+  coverUrl    String?
+  position    Int     @default(0)
+  isActive    Boolean @default(true)
+
+  @@map("categories")
+}
+
+// =============================================
+// CHALLENGES
+// =============================================
+model Challenge {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  description   String?   @db.Text
+  coverUrl      String?
+  prizeDesc     String?
+  submissionTag String?
+  startsAt      DateTime?
+  endsAt        DateTime?
+  status        String    @default("upcoming")
+  winnerId      String?
+  createdAt     DateTime  @default(now())
+
+  @@map("challenges")
+}
+
+// =============================================
+// API KEYS
+// =============================================
+model ApiKey {
+  id             String    @id @default(cuid())
+  userId         String
+  keyHash        String    @unique
+  keyPreview     String?   @db.VarChar(20)
+  label          String?
+  tier           String    @default("free")
+  rateLimitHour  Int       @default(200)
+  rateLimitMonth Int       @default(20000)
+  isActive       Boolean   @default(true)
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
+// =============================================
+// HERO IMAGES (homepage feature rotation)
+// =============================================
+model HeroImage {
+  id          String   @id @default(cuid())
+  photoId     String
+  userId      String?
+  displayDate DateTime @unique @db.Date
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  photo Photo @relation(fields: [photoId], references: [id])
+  user  User? @relation(fields: [userId], references: [id])
+
+  @@map("hero_images")
+}
+
+// =============================================
+// REPORTS (content moderation)
+// =============================================
+model Report {
+  id          String    @id @default(cuid())
+  reporterId  String?
+  mediaType   String    @db.VarChar(10)
+  mediaId     String
+  reason      String    @db.VarChar(50)
+  description String?   @db.Text
+  status      String    @default("pending")
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  reporter User?  @relation("reporter", fields: [reporterId], references: [id])
+  photo    Photo? @relation("photoReports", fields: [mediaId], references: [id])
+
+  @@index([status])
+  @@index([mediaType, mediaId])
+  @@map("reports")
+}
+
+// =============================================
+// AUDIT LOGS
+// =============================================
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String   @db.VarChar(50)
+  targetType String?  @db.VarChar(30)
+  targetId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+// =============================================
+// NOTIFICATIONS
+// =============================================
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   @db.VarChar(30)
+  title     String
+  message   String?  @db.Text
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+// =============================================
+// MODERATION DECISIONS
+// =============================================
+model ModerationDecision {
+  id           String   @id @default(cuid())
+  moderatorId  String
+  mediaType    String   @db.VarChar(10)
+  mediaId      String
+  action       String   @db.VarChar(20)
+  reasonCode   String?  @db.VarChar(50)
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  moderator User @relation("moderationDecisions", fields: [moderatorId], references: [id])
+
+  @@index([mediaType, mediaId])
+  @@index([moderatorId])
+  @@index([createdAt(sort: Desc)])
+  @@map("moderation_decisions")
+}
+
+// =============================================
+// SEARCH SYNONYMS
+// =============================================
+model SearchSynonym {
+  id        String   @id @default(cuid())
+  term      String
+  synonym   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([term, synonym])
+  @@map("search_synonyms")
+}
+
+// =============================================
+// BLOCKED KEYWORDS
+// =============================================
+model BlockedKeyword {
+  id        String   @id @default(cuid())
+  keyword   String   @unique
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@map("blocked_keywords")
+}
+
+// =============================================
+// FEATURED TOPICS
+// =============================================
+model FeaturedTopic {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  coverUrl    String?
+  position    Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("featured_topics")
+}
+
+// =============================================
+// SPONSOR PLACEMENTS
+// =============================================
+model SponsorPlacement {
+  id          String    @id @default(cuid())
+  name        String
+  slot        String    @db.VarChar(30)
+  imageUrl    String?
+  linkUrl     String?
+  impressions Int       @default(0)
+  clicks      Int       @default(0)
+  isActive    Boolean   @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([slot, isActive])
+  @@map("sponsor_placements")
+}
