@@ -71,10 +71,22 @@ export default async function DiscoverPage() {
                 <Link
                   key={cat.id}
                   href={`/search/${cat.slug}`}
-                  className={`relative h-36 rounded-2xl overflow-hidden bg-gradient-to-br ${gradients[i % gradients.length]} group shadow-sm hover:shadow-lg transition-all`}
+                  className="relative h-36 rounded-2xl overflow-hidden group shadow-sm hover:shadow-lg transition-all"
                 >
+                  {cat.coverUrl ? (
+                    <>
+                      <img
+                        src={cat.coverUrl}
+                        alt={cat.name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+                    </>
+                  ) : (
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradients[i % gradients.length]}`} />
+                  )}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-white text-subtitle font-bold group-hover:scale-110 transition-transform drop-shadow-sm">
+                    <span className="text-white text-subtitle font-bold group-hover:scale-110 transition-transform drop-shadow-md">
                       {cat.name}
                     </span>
                   </div>

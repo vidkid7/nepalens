@@ -11,7 +11,8 @@ const FOOTER_LINKS = {
   Community: [
     { label: "Leaderboard", href: "/leaderboard" },
     { label: "Upload", href: "/upload" },
-    { label: "Contributor Guidelines", href: "/contributor-guidelines" },
+    { label: "Become a Contributor", href: "/contribute" },
+    { label: "Contributor Guidelines", href: "/contribute#guidelines" },
   ],
   Company: [
     { label: "About", href: "/about" },

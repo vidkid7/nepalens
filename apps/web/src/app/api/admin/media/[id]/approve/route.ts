@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@pixelstock/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { CONTENT_STATES, isValidTransition } from "@pixelstock/shared";
 
 // PATCH /api/admin/media/[id]/approve
 export async function PATCH(
@@ -14,31 +15,86 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const moderatorId = (session.user as any).id;
   const body = await request.json().catch(() => ({}));
   const feature = body.feature || false;
   const curate = body.curate || false;
+  const publish = body.publish || false;
 
   const photo = await prisma.photo.findUnique({ where: { id } });
   if (!photo) {
-    // Try video
     const video = await prisma.video.findUnique({ where: { id } });
     if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    await prisma.video.update({
+    if (!isValidTransition(video.status, CONTENT_STATES.APPROVED)) {
+      return NextResponse.json(
+        { error: `Cannot approve video in '${video.status}' state` },
+        { status: 422 }
+      );
+    }
+
+    let targetStatus: string = CONTENT_STATES.APPROVED;
+    if (publish && isValidTransition(CONTENT_STATES.APPROVED, CONTENT_STATES.PUBLISHED)) {
+      targetStatus = CONTENT_STATES.PUBLISHED;
+    }
+
+    const updated = await prisma.video.update({
       where: { id },
       data: {
-        status: "approved",
+        status: targetStatus,
         isFeatured: feature,
       },
     });
-    return NextResponse.json({ message: "Video approved" });
+
+    await prisma.moderationDecision.create({
+      data: {
+        moderatorId,
+        mediaType: "video",
+        mediaId: id,
+        action: targetStatus === CONTENT_STATES.PUBLISHED ? "approve_and_publish" : "approve",
+        notes: body.notes || null,
+      },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: moderatorId,
+        action: "media.approve",
+        targetType: "video",
+        targetId: id,
+        details: {
+          previousStatus: video.status,
+          newStatus: targetStatus,
+          feature,
+          publish,
+        },
+      },
+    });
+
+    return NextResponse.json({
+      message: `Video ${targetStatus}`,
+      status: targetStatus,
+      id: updated.id,
+    });
   }
 
-  await prisma.photo.update({
+  if (!isValidTransition(photo.status, CONTENT_STATES.APPROVED)) {
+    return NextResponse.json(
+      { error: `Cannot approve photo in '${photo.status}' state` },
+      { status: 422 }
+    );
+  }
+
+  let targetStatus: string = CONTENT_STATES.APPROVED;
+  if (publish && isValidTransition(CONTENT_STATES.APPROVED, CONTENT_STATES.PUBLISHED)) {
+    targetStatus = CONTENT_STATES.PUBLISHED;
+  }
+
+  const updated = await prisma.photo.update({
     where: { id },
     data: {
-      status: "approved",
-      approvedBy: (session.user as any).id,
+      status: targetStatus,
+      approvedBy: moderatorId,
       approvedAt: new Date(),
       isFeatured: feature,
       isCurated: curate,
@@ -47,5 +103,35 @@ export async function PATCH(
     },
   });
 
-  return NextResponse.json({ message: "Photo approved" });
+  await prisma.moderationDecision.create({
+    data: {
+      moderatorId,
+      mediaType: "photo",
+      mediaId: id,
+      action: targetStatus === CONTENT_STATES.PUBLISHED ? "approve_and_publish" : "approve",
+      notes: body.notes || null,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: moderatorId,
+      action: "media.approve",
+      targetType: "photo",
+      targetId: id,
+      details: {
+        previousStatus: photo.status,
+        newStatus: targetStatus,
+        feature,
+        curate,
+        publish,
+      },
+    },
+  });
+
+  return NextResponse.json({
+    message: `Photo ${targetStatus}`,
+    status: targetStatus,
+    id: updated.id,
+  });
 }

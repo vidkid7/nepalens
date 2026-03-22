@@ -5,6 +5,10 @@ import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+let leaderboardCache: { data: any; computedAt: Date } | null = null;
+
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
   if (!session?.user || !(session.user as any).isAdmin) {
@@ -13,24 +17,35 @@ async function requireAdmin() {
   return session;
 }
 
-// GET /api/admin/leaderboard?period=30d&sort=views
-export async function GET(request: NextRequest) {
-  const session = await requireAdmin();
-  if (!session) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+async function getExcludedUserIds(): Promise<Set<string>> {
+  const exclusions = await prisma.auditLog.findMany({
+    where: { action: "leaderboard.exclude" },
+    select: { targetId: true },
+  });
+  const inclusions = await prisma.auditLog.findMany({
+    where: { action: "leaderboard.include" },
+    select: { targetId: true },
+  });
+
+  const excluded = new Set<string>();
+  for (const e of exclusions) {
+    if (e.targetId) excluded.add(e.targetId);
   }
+  for (const i of inclusions) {
+    if (i.targetId) excluded.delete(i.targetId);
+  }
+  return excluded;
+}
 
-  const { searchParams } = new URL(request.url);
-  const period = searchParams.get("period") || "all-time";
-  const sort = searchParams.get("sort") || "views";
-
+async function computeLeaderboard(period: string, sort: string) {
   const dateFilter =
     period === "30d"
       ? { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }
       : {};
 
-  // Build the aggregation based on sort preference
   const orderByField = sort === "downloads" ? "downloadsCount" : "viewsCount";
+
+  const excludedIds = await getExcludedUserIds();
 
   const users = await prisma.user.findMany({
     where: {
@@ -38,6 +53,7 @@ export async function GET(request: NextRequest) {
         some: { status: "approved", ...dateFilter },
       },
       isBanned: false,
+      ...(excludedIds.size > 0 ? { id: { notIn: [...excludedIds] } } : {}),
     },
     select: {
       id: true,
@@ -55,8 +71,7 @@ export async function GET(request: NextRequest) {
     take: 200,
   });
 
-  // Aggregate stats per user and sort
-  const leaderboard = users
+  return users
     .map((user) => {
       const totalViews = user.photos.reduce(
         (sum, p) => sum + Number(p.viewsCount),
@@ -82,12 +97,48 @@ export async function GET(request: NextRequest) {
         : b.totalViews - a.totalViews
     )
     .slice(0, 50);
+}
+
+// GET /api/admin/leaderboard?period=30d&sort=views
+export async function GET(request: NextRequest) {
+  const session = await requireAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const period = searchParams.get("period") || "all-time";
+  const sort = searchParams.get("sort") || "views";
+
+  const cacheKey = `${period}:${sort}`;
+
+  if (
+    leaderboardCache &&
+    leaderboardCache.data._cacheKey === cacheKey &&
+    Date.now() - leaderboardCache.computedAt.getTime() < CACHE_TTL_MS
+  ) {
+    return NextResponse.json({
+      leaderboard: leaderboardCache.data.leaderboard,
+      period,
+      sort,
+      lastRefreshed: leaderboardCache.computedAt.toISOString(),
+      cached: true,
+    });
+  }
+
+  const leaderboard = await computeLeaderboard(period, sort);
+
+  leaderboardCache = {
+    data: { leaderboard, _cacheKey: cacheKey },
+    computedAt: new Date(),
+  };
 
   return NextResponse.json({
     leaderboard,
     period,
     sort,
-    lastRefreshed: new Date().toISOString(),
+    lastRefreshed: leaderboardCache.computedAt.toISOString(),
+    cached: false,
   });
 }
 
@@ -99,9 +150,20 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { action, userId } = body;
+  const { action, userId, reason } = body;
+  const adminId = (session.user as any).id;
 
   if (action === "refresh") {
+    leaderboardCache = null;
+
+    await prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "leaderboard.refresh",
+        details: { triggeredBy: adminId },
+      },
+    });
+
     return NextResponse.json({
       success: true,
       message: "Leaderboard cache refreshed",
@@ -110,7 +172,24 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (action === "exclude" && userId) {
-    // Placeholder: In production, mark user as excluded from leaderboard
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "leaderboard.exclude",
+        targetType: "user",
+        targetId: userId,
+        details: { reason: reason || "Excluded from leaderboard by admin" },
+      },
+    });
+
+    // Invalidate cache so next GET reflects the exclusion
+    leaderboardCache = null;
+
     return NextResponse.json({
       success: true,
       message: `User ${userId} excluded from leaderboard`,
@@ -118,8 +197,33 @@ export async function PATCH(request: NextRequest) {
     });
   }
 
+  if (action === "include" && userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "leaderboard.include",
+        targetType: "user",
+        targetId: userId,
+        details: { reason: reason || "Re-included in leaderboard by admin" },
+      },
+    });
+
+    leaderboardCache = null;
+
+    return NextResponse.json({
+      success: true,
+      message: `User ${userId} re-included in leaderboard`,
+      userId,
+    });
+  }
+
   return NextResponse.json(
-    { error: "Invalid action. Use 'refresh' or 'exclude' with userId." },
+    { error: "Invalid action. Use 'refresh', 'exclude', or 'include' with userId." },
     { status: 400 }
   );
 }
