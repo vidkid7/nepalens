@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/Toast";
 import Avatar from "@/components/ui/Avatar";
 import MasonryGrid from "@/components/media/MasonryGrid";
+import DownloadModal from "@/components/media/DownloadModal";
 
 interface PhotoData {
   id: string;
@@ -44,6 +45,7 @@ export default function PhotoDetailClient({
   const [liked, setLiked] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [following, setFollowing] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   // Track view
   useEffect(() => {
@@ -194,6 +196,15 @@ export default function PhotoDetailClient({
               )}
               Free Download
             </button>
+            <button
+              onClick={() => setShowDownloadModal(true)}
+              className="btn btn-sm btn-outline"
+              title="Choose download size"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -277,14 +288,14 @@ export default function PhotoDetailClient({
             <div className="card p-5 space-y-3">
               <h2 className="text-label text-surface-900">Download</h2>
               {[
-                { label: "Original", size: `${photo.width} × ${photo.height}` },
-                { label: "Large", size: "1920 × 1280" },
-                { label: "Medium", size: "1280 × 853" },
-                { label: "Small", size: "640 × 427" },
+                { label: "Original", size: `${photo.width} × ${photo.height}`, key: "original" },
+                { label: "Large", size: "1920 × 1280", key: "large" },
+                { label: "Medium", size: "1280 × 853", key: "medium" },
+                { label: "Small", size: "640 × 427", key: "small" },
               ].map((variant) => (
                 <button
                   key={variant.label}
-                  onClick={handleDownload}
+                  onClick={() => setShowDownloadModal(true)}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-surface-50 transition-colors text-caption"
                 >
                   <span className="text-surface-700 font-medium">{variant.label}</span>
@@ -303,6 +314,18 @@ export default function PhotoDetailClient({
           </div>
         )}
       </div>
+
+      {/* Download size modal */}
+      <DownloadModal
+        open={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        photo={{
+          id: photo.id,
+          width: photo.width,
+          height: photo.height,
+          src: photo.src,
+        }}
+      />
     </div>
   );
 }

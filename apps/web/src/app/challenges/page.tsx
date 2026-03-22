@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Tabs from "@/components/ui/Tabs";
 import Skeleton from "@/components/ui/Skeleton";
@@ -16,13 +16,17 @@ interface Challenge {
   startsAt: string | null;
   endsAt: string | null;
   status: string;
+  submissionCount?: number;
 }
 
 function statusBadge(status: string) {
   switch (status) {
     case "active": return "badge badge-success";
     case "upcoming": return "badge badge-info";
-    case "ended": return "badge badge-neutral";
+    case "completed":
+    case "ended":
+    case "archived":
+      return "badge badge-neutral";
     default: return "badge badge-neutral";
   }
 }
@@ -31,7 +35,9 @@ function statusLabel(status: string) {
   switch (status) {
     case "active": return "Active";
     case "upcoming": return "Upcoming";
+    case "completed": return "Completed";
     case "ended": return "Ended";
+    case "archived": return "Archived";
     default: return status;
   }
 }
@@ -41,25 +47,66 @@ function formatDate(dateStr: string | null) {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// Map tab IDs to API status filter values
+function tabToApiStatus(tabId: string): string {
+  switch (tabId) {
+    case "active": return "active";
+    case "upcoming": return "upcoming";
+    case "past": return "past";
+    default: return "all";
+  }
+}
+
 export default function ChallengesPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("active");
+  const [counts, setCounts] = useState({ active: 0, upcoming: 0, past: 0 });
 
-  useEffect(() => {
-    fetch("/api/internal/challenges?status=all")
-      .then((r) => r.json())
-      .then((data) => { setChallenges(data.challenges || []); setLoading(false); })
-      .catch(() => setLoading(false));
+  const fetchChallenges = useCallback(async (tab: string) => {
+    setLoading(true);
+    try {
+      const status = tabToApiStatus(tab);
+      const res = await fetch(`/api/internal/challenges?status=${status}&per_page=50`);
+      const data = await res.json();
+      setChallenges(data.challenges || []);
+    } catch {
+      setChallenges([]);
+    }
+    setLoading(false);
   }, []);
 
-  const tabs = [
-    { id: "active", label: "Active", count: challenges.filter((c) => c.status === "active").length },
-    { id: "upcoming", label: "Upcoming", count: challenges.filter((c) => c.status === "upcoming").length },
-    { id: "ended", label: "Past", count: challenges.filter((c) => c.status === "ended").length },
-  ];
+  // Fetch counts on mount
+  useEffect(() => {
+    fetch("/api/internal/challenges?status=all&per_page=1")
+      .then((r) => r.json())
+      .then((data) => {
+        const allChallenges: Challenge[] = data.challenges || [];
+        // Fetch all to count; also do a full fetch for active tab
+        return fetch("/api/internal/challenges?status=all&per_page=200")
+          .then((r) => r.json())
+          .then((fullData) => {
+            const all: Challenge[] = fullData.challenges || [];
+            setCounts({
+              active: all.filter((c) => c.status === "active").length,
+              upcoming: all.filter((c) => c.status === "upcoming").length,
+              past: all.filter((c) => ["completed", "ended", "archived"].includes(c.status)).length,
+            });
+          });
+      })
+      .catch(() => {});
+  }, []);
 
-  const filtered = challenges.filter((c) => c.status === activeTab);
+  // Fetch challenges when tab changes
+  useEffect(() => {
+    fetchChallenges(activeTab);
+  }, [activeTab, fetchChallenges]);
+
+  const tabs = [
+    { id: "active", label: "Active", count: counts.active },
+    { id: "upcoming", label: "Upcoming", count: counts.upcoming },
+    { id: "past", label: "Past", count: counts.past },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -94,14 +141,14 @@ export default function ChallengesPage() {
                 </div>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : challenges.length === 0 ? (
             <EmptyState
-              title={`No ${activeTab} challenges`}
+              title={`No ${activeTab === "past" ? "past" : activeTab} challenges`}
               description={activeTab === "active" ? "There are no active challenges right now. Check back soon!" : activeTab === "upcoming" ? "No upcoming challenges announced yet." : "No past challenges to display."}
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((challenge) => (
+              {challenges.map((challenge) => (
                 <Link key={challenge.id} href={`/challenges/${challenge.slug}`} className="card overflow-hidden group hover:shadow-card-hover transition-all">
                   <div className="h-48 relative overflow-hidden">
                     {challenge.coverUrl ? (
@@ -127,6 +174,12 @@ export default function ChallengesPage() {
                         {formatDate(challenge.startsAt)} \u2013 {formatDate(challenge.endsAt)}
                       </span>
                     </div>
+                    {(challenge.submissionCount !== undefined && challenge.submissionCount > 0) && (
+                      <p className="text-micro text-surface-400 mt-2 flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        {challenge.submissionCount} submissions
+                      </p>
+                    )}
                     {challenge.prizeDesc && (
                       <div className="mt-3 pt-3 border-t border-surface-100">
                         <p className="text-micro text-brand font-medium flex items-center gap-1">
