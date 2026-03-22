@@ -12,11 +12,11 @@ const TRENDING_TAGS = [
 
 function getPhotoUrl(
   photo: { id: string; cdnKey: string | null; originalUrl: string },
-  size = "large"
+  _size = "large"
 ) {
   const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
   return photo.cdnKey
-    ? `${cdnBase}/photos/${photo.id}/${size}.jpg`
+    ? `${cdnBase}/${photo.cdnKey}`
     : photo.originalUrl;
 }
 
@@ -260,7 +260,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {curatedPhotos.map((photo) => (
               <Link
                 key={photo.id}
-                href={`/photo/${photo.slug}`}
+                href={`/photo/${photo.slug}-${photo.id}`}
                 className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-surface-100"
               >
                 <img
@@ -303,7 +303,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {trendingPhotos.map((photo) => (
               <Link
                 key={photo.id}
-                href={`/photo/${photo.slug}`}
+                href={`/photo/${photo.slug}-${photo.id}`}
                 className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-surface-100"
               >
                 <img
