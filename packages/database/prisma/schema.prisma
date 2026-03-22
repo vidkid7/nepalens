@@ -34,21 +34,51 @@ model User {
   updatedAt      DateTime  @updatedAt
   lastLoginAt    DateTime?
 
-  photos      Photo[]
-  videos      Video[]
-  collections Collection[]
-  likes       Like[]
-  downloads   Download[]
-  apiKeys     ApiKey[]
-  followers   Follow[]    @relation("following")
-  following   Follow[]    @relation("follower")
-  reports     Report[]    @relation("reporter")
-  heroImages  HeroImage[]
-  auditLogs            AuditLog[]
-  notifications        Notification[]
-  moderationDecisions  ModerationDecision[] @relation("moderationDecisions")
+  photos              Photo[]
+  videos              Video[]
+  collections         Collection[]
+  likes               Like[]
+  downloads           Download[]
+  apiKeys             ApiKey[]
+  followers           Follow[]             @relation("following")
+  following           Follow[]             @relation("follower")
+  reports             Report[]             @relation("reporter")
+  heroImages          HeroImage[]
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+  moderationDecisions ModerationDecision[] @relation("moderationDecisions")
+  roles               UserRole[]
 
   @@map("users")
+}
+
+// =============================================
+// ROLES & PERMISSIONS (RBAC)
+// =============================================
+model Role {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  permissions String[]
+  createdAt   DateTime   @default(now())
+  users       UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  grantedAt DateTime @default(now())
+  grantedBy String?
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
 }
 
 // =============================================
@@ -114,25 +144,25 @@ model Photo {
 // VIDEOS
 // =============================================
 model Video {
-  id              String    @id @default(cuid())
+  id              String   @id @default(cuid())
   userId          String
   slug            String
-  altText         String?   @db.VarChar(500)
-  description     String?   @db.Text
+  altText         String?  @db.VarChar(500)
+  description     String?  @db.Text
   width           Int
   height          Int
   durationSeconds Int?
   frameRate       Float?
   thumbnailUrl    String?
-  blurHash        String?   @db.VarChar(100)
-  orientation     String?   @db.VarChar(10)
-  status          String    @default("pending")
-  isFeatured      Boolean   @default(false)
-  viewsCount      BigInt    @default(0)
-  downloadsCount  BigInt    @default(0)
-  likesCount      Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  blurHash        String?  @db.VarChar(100)
+  orientation     String?  @db.VarChar(10)
+  status          String   @default("pending")
+  isFeatured      Boolean  @default(false)
+  viewsCount      BigInt   @default(0)
+  downloadsCount  BigInt   @default(0)
+  likesCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   user            User             @relation(fields: [userId], references: [id])
   files           VideoFile[]
@@ -151,10 +181,10 @@ model Video {
 // VIDEO FILES (multiple resolution variants)
 // =============================================
 model VideoFile {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   videoId  String
-  quality  String @db.VarChar(10)
-  fileType String @db.VarChar(10)
+  quality  String  @db.VarChar(10)
+  fileType String  @db.VarChar(10)
   width    Int
   height   Int
   fps      Float?
@@ -171,13 +201,13 @@ model VideoFile {
 // TAGS
 // =============================================
 model Tag {
-  id          String     @id @default(cuid())
-  name        String     @unique
-  slug        String     @unique
-  photosCount Int        @default(0)
-  videosCount Int        @default(0)
-  isCurated   Boolean    @default(false)
-  createdAt   DateTime   @default(now())
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  photosCount Int      @default(0)
+  videosCount Int      @default(0)
+  isCurated   Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   photos PhotoTag[]
   videos VideoTag[]
@@ -460,14 +490,14 @@ model Notification {
 // MODERATION DECISIONS
 // =============================================
 model ModerationDecision {
-  id           String   @id @default(cuid())
-  moderatorId  String
-  mediaType    String   @db.VarChar(10)
-  mediaId      String
-  action       String   @db.VarChar(20)
-  reasonCode   String?  @db.VarChar(50)
-  notes        String?  @db.Text
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  moderatorId String
+  mediaType   String   @db.VarChar(10)
+  mediaId     String
+  action      String   @db.VarChar(20)
+  reasonCode  String?  @db.VarChar(50)
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
 
   moderator User @relation("moderationDecisions", fields: [moderatorId], references: [id])
 

@@ -154,7 +154,7 @@ export default function Navbar() {
                       </Link>
                     </DropdownItem>
                     <DropdownItem onClick={() => {}}>
-                      <Link href="/account/settings" className="block w-full">
+                      <Link href="/settings" className="block w-full">
                         Settings
                       </Link>
                     </DropdownItem>

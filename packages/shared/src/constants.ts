@@ -46,6 +46,50 @@ export const PHOTO_STATUSES = [
 ] as const;
 export type PhotoStatus = (typeof PHOTO_STATUSES)[number];
 
+// Content state machine (all 12 states)
+export const CONTENT_STATES = {
+  DRAFT: 'draft',
+  UPLOADED: 'uploaded',
+  PROCESSING: 'processing',
+  PROCESSING_FAILED: 'processing_failed',
+  PENDING_REVIEW: 'pending_review',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  NEEDS_CHANGES: 'needs_changes',
+  PUBLISHED: 'published',
+  HIDDEN: 'hidden',
+  REMOVED: 'removed',
+  REPORTED: 'reported',
+} as const;
+
+export type ContentState = (typeof CONTENT_STATES)[keyof typeof CONTENT_STATES];
+
+// Valid state transitions: maps current state → allowed next states
+export const STATE_TRANSITIONS: Record<string, string[]> = {
+  draft: ['uploaded'],
+  uploaded: ['processing'],
+  processing: ['processing_failed', 'pending_review'],
+  processing_failed: ['processing'], // retry
+  pending_review: ['approved', 'rejected', 'needs_changes'],
+  approved: ['published', 'hidden', 'removed', 'reported'],
+  rejected: ['pending_review'], // resubmit
+  needs_changes: ['pending_review'], // resubmit after changes
+  published: ['hidden', 'removed', 'reported'],
+  hidden: ['published', 'removed'],
+  removed: ['pending_review'], // restore
+  reported: ['approved', 'removed'], // after review
+};
+
+/**
+ * Validate whether a state transition is allowed.
+ * Returns true if transitioning from `currentState` to `nextState` is valid.
+ */
+export function isValidTransition(currentState: string, nextState: string): boolean {
+  const allowed = STATE_TRANSITIONS[currentState];
+  if (!allowed) return false;
+  return allowed.includes(nextState);
+}
+
 export const VIDEO_QUALITIES = ["hd", "fhd", "4k"] as const;
 export type VideoQuality = (typeof VIDEO_QUALITIES)[number];
 
