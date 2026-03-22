@@ -1,128 +1,180 @@
 import { Metadata } from "next";
-import Link from "next/link";
+import { prisma } from "@pixelstock/database";
+import { notFound } from "next/navigation";
+import VideoDetailClient from "./VideoDetailClient";
 
 interface VideoPageProps {
   params: { slug: string };
 }
 
+async function getVideo(slug: string) {
+  const parts = slug.split("-");
+  const videoId = parts[parts.length - 1];
+
+  try {
+    const video = await prisma.video.findUnique({
+      where: { id: videoId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            bio: true,
+            followersCount: true,
+          },
+        },
+        files: {
+          orderBy: { width: "asc" },
+        },
+        tags: { include: { tag: true } },
+        _count: { select: { likes: true, downloads: true } },
+      },
+    });
+    return video;
+  } catch {
+    return null;
+  }
+}
+
+async function getRelatedVideos(videoId: string, tags: string[]) {
+  try {
+    const related = await prisma.video.findMany({
+      where: {
+        id: { not: videoId },
+        status: "approved",
+        tags: tags.length > 0 ? { some: { tag: { name: { in: tags } } } } : undefined,
+      },
+      take: 8,
+      orderBy: { viewsCount: "desc" },
+      include: {
+        user: { select: { username: true, displayName: true } },
+        files: { take: 1, orderBy: { width: "desc" } },
+      },
+    });
+    return related;
+  } catch {
+    return [];
+  }
+}
+
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return "—";
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatFileSize(bytes: bigint | null): string {
+  if (!bytes) return "—";
+  const mb = Number(bytes) / (1024 * 1024);
+  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
+  return `${mb.toFixed(1)} MB`;
+}
+
 export async function generateMetadata({ params }: VideoPageProps): Promise<Metadata> {
+  const video = await getVideo(params.slug);
   const parts = params.slug.split("-");
-  const name = parts.slice(0, -1).join(" ");
-  const title = name.charAt(0).toUpperCase() + name.slice(1);
+  const fallbackName = parts.slice(0, -1).join(" ");
+  const title = video?.altText || video?.description || fallbackName || "Video";
 
   return {
     title: `${title} — Free Stock Video | PixelStock`,
     description: `Download this free video: ${title}. Free for personal and commercial use.`,
+    openGraph: video?.thumbnailUrl
+      ? {
+          images: [{ url: video.thumbnailUrl, width: video.width, height: video.height }],
+        }
+      : undefined,
   };
 }
 
-export default function VideoDetailPage({ params }: VideoPageProps) {
+export default async function VideoDetailPage({ params }: VideoPageProps) {
+  const video = await getVideo(params.slug);
   const parts = params.slug.split("-");
   const videoId = parts[parts.length - 1];
-  const name = parts.slice(0, -1).join(" ");
-  const title = name.charAt(0).toUpperCase() + name.slice(1);
+  const fallbackTitle = parts.slice(0, -1).join(" ");
 
-  return (
-    <div className="container-app py-8">
-      <div className="max-w-5xl mx-auto">
-        {/* Video Player */}
-        <div className="bg-black rounded-2xl overflow-hidden mb-6 aspect-video flex items-center justify-center shadow-lg">
-          <div className="text-center text-white/40">
-            <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-              <svg className="w-10 h-10 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-            <p className="text-caption text-white/60">{title || "Untitled Video"}</p>
-          </div>
-        </div>
+  const videoData = video
+    ? {
+        id: video.id,
+        slug: video.slug,
+        title: video.altText || video.description || fallbackTitle || "Untitled Video",
+        description: video.description || null,
+        width: video.width,
+        height: video.height,
+        duration: video.durationSeconds,
+        durationFormatted: formatDuration(video.durationSeconds),
+        fps: video.frameRate,
+        thumbnailUrl:
+          video.thumbnailUrl ||
+          `https://placehold.co/${video.width}x${video.height}/1a1a1a/ffffff?text=${encodeURIComponent(fallbackTitle || "Video")}`,
+        photographer: {
+          username: video.user.username,
+          displayName: video.user.displayName || video.user.username,
+          avatarUrl: video.user.avatarUrl,
+          bio: video.user.bio,
+          followersCount: video.user.followersCount,
+        },
+        files: video.files.map((f) => ({
+          id: f.id,
+          quality: f.quality,
+          width: f.width,
+          height: f.height,
+          fps: f.fps,
+          fileSize: formatFileSize(f.fileSize),
+          fileSizeRaw: f.fileSize ? Number(f.fileSize) : 0,
+          url: f.cdnUrl,
+        })),
+        tags: video.tags.map((vt: any) => vt.tag.name),
+        likes: video._count.likes,
+        downloads: video._count.downloads,
+        views: Number(video.viewsCount),
+      }
+    : {
+        id: videoId,
+        slug: videoId,
+        title: fallbackTitle.charAt(0).toUpperCase() + fallbackTitle.slice(1) || "Video",
+        description: null,
+        width: 1920,
+        height: 1080,
+        duration: null,
+        durationFormatted: "—",
+        fps: null,
+        thumbnailUrl: `https://placehold.co/1920x1080/1a1a1a/ffffff?text=${encodeURIComponent(fallbackTitle || "Video")}`,
+        photographer: {
+          username: "videographer",
+          displayName: "Videographer",
+          avatarUrl: null,
+          bio: null,
+          followersCount: 0,
+        },
+        files: [
+          { id: "hd", quality: "hd", width: 1280, height: 720, fps: 30, fileSize: "~15 MB", fileSizeRaw: 0, url: "" },
+          { id: "fhd", quality: "fhd", width: 1920, height: 1080, fps: 30, fileSize: "~35 MB", fileSizeRaw: 0, url: "" },
+        ],
+        tags: (fallbackTitle || "stock video").split(" ").filter(Boolean).map((w) => w.toLowerCase()),
+        likes: 0,
+        downloads: 0,
+        views: 0,
+      };
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Title & Actions */}
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="text-title text-surface-900">{title || "Untitled Video"}</h1>
-                <p className="text-caption text-surface-500 mt-1">Free stock video</p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <button className="btn btn-sm btn-ghost" aria-label="Like">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </button>
-                <button className="btn btn-sm btn-ghost" aria-label="Save">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                  </svg>
-                </button>
-                <button className="btn btn-sm btn-ghost" aria-label="Share">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+  const tagNames = video ? video.tags.map((vt: any) => vt.tag.name) : [];
+  const relatedVideos = await getRelatedVideos(videoId, tagNames);
 
-            {/* Video info */}
-            <div className="card p-5">
-              <h3 className="text-label text-surface-900 mb-3">Video Information</h3>
-              <div className="grid grid-cols-2 gap-3 text-caption">
-                <div className="flex justify-between py-2 border-b border-surface-100">
-                  <span className="text-surface-500">Duration</span>
-                  <span className="text-surface-900 font-medium">—</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-surface-100">
-                  <span className="text-surface-500">Resolution</span>
-                  <span className="text-surface-900 font-medium">1080p</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-surface-100">
-                  <span className="text-surface-500">Format</span>
-                  <span className="text-surface-900 font-medium">MP4</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-surface-100">
-                  <span className="text-surface-500">License</span>
-                  <Link href="/license" className="text-brand font-medium hover:underline">Free</Link>
-                </div>
-              </div>
-            </div>
-          </div>
+  const relatedData = relatedVideos.map((v: any) => ({
+    id: v.id,
+    slug: v.slug,
+    title: v.altText || v.description || "Video",
+    width: v.width,
+    height: v.height,
+    duration: v.durationSeconds,
+    thumbnailUrl: v.thumbnailUrl || `https://placehold.co/640x360/1a1a1a/fff?text=Video`,
+    photographer: v.user?.displayName || v.user?.username || "Unknown",
+    photographerUrl: `/profile/${v.user?.username || "user"}`,
+    previewUrl: v.files?.[0]?.cdnUrl || null,
+  }));
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            {/* Download options */}
-            <div className="card p-5">
-              <h3 className="text-label text-surface-900 mb-3">Download</h3>
-              <div className="space-y-2">
-                {[
-                  { label: "HD", res: "1280×720", size: "~15 MB" },
-                  { label: "Full HD", res: "1920×1080", size: "~35 MB" },
-                  { label: "4K", res: "3840×2160", size: "~120 MB" },
-                ].map((opt) => (
-                  <button key={opt.label} className="w-full btn btn-sm btn-primary justify-between">
-                    <span>Download {opt.label}</span>
-                    <span className="text-micro opacity-70">{opt.size}</span>
-                  </button>
-                ))}
-              </div>
-              <p className="text-micro text-surface-400 mt-3">Free for personal and commercial use.</p>
-            </div>
-
-            {/* Tags placeholder */}
-            <div className="card p-5">
-              <h3 className="text-label text-surface-900 mb-3">Tags</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {(title || "stock video").split(" ").filter(Boolean).map((word) => (
-                  <Link key={word} href={`/search/${word.toLowerCase()}`} className="chip">
-                    {word.toLowerCase()}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <VideoDetailClient video={videoData} relatedVideos={relatedData} />;
 }

@@ -1,0 +1,506 @@
+"use client";
+
+import Link from "next/link";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/Toast";
+import Avatar from "@/components/ui/Avatar";
+import SaveToCollectionModal from "@/components/collections/SaveToCollectionModal";
+import ReportContentModal from "@/components/media/ReportContentModal";
+
+interface VideoFile {
+  id: string;
+  quality: string;
+  width: number;
+  height: number;
+  fps: number | null;
+  fileSize: string;
+  fileSizeRaw: number;
+  url: string;
+}
+
+interface VideoData {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  width: number;
+  height: number;
+  duration: number | null;
+  durationFormatted: string;
+  fps: number | null;
+  thumbnailUrl: string;
+  photographer: {
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+    bio: string | null;
+    followersCount: number;
+  };
+  files: VideoFile[];
+  tags: string[];
+  likes: number;
+  downloads: number;
+  views: number;
+}
+
+interface RelatedVideo {
+  id: string;
+  slug: string;
+  title: string;
+  width: number;
+  height: number;
+  duration: number | null;
+  thumbnailUrl: string;
+  photographer: string;
+  photographerUrl: string;
+  previewUrl: string | null;
+}
+
+const QUALITY_LABELS: Record<string, string> = {
+  sd: "SD",
+  hd: "HD",
+  fhd: "Full HD",
+  "4k": "4K",
+  uhd: "UHD",
+};
+
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return "";
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+export default function VideoDetailClient({
+  video,
+  relatedVideos,
+}: {
+  video: VideoData;
+  relatedVideos: RelatedVideo[];
+}) {
+  const { data: session } = useSession();
+  const { toast } = useToast();
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const [liked, setLiked] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [following, setFollowing] = useState(false);
+  const [collectionModalOpen, setCollectionModalOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  // Track view
+  useEffect(() => {
+    fetch(`/api/internal/videos/${video.id}/view`, { method: "POST" }).catch(() => {});
+  }, [video.id]);
+
+  const handlePlayPause = useCallback(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) {
+      el.play().catch(() => {});
+      setIsPlaying(true);
+    } else {
+      el.pause();
+      setIsPlaying(false);
+    }
+  }, []);
+
+  const handleLike = useCallback(async () => {
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
+    try {
+      const res = await fetch(`/api/internal/videos/${video.id}/like`, { method: "POST" });
+      const data = await res.json();
+      setLiked(data.liked);
+      toast(data.liked ? "Added to liked videos" : "Removed from liked", "success");
+    } catch {
+      toast("Could not update like", "error");
+    }
+  }, [session, video.id, toast]);
+
+  const handleDownload = useCallback(
+    async (quality: string) => {
+      setDownloading(quality);
+      try {
+        const res = await fetch(`/api/internal/videos/${video.id}/download`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quality }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          const a = document.createElement("a");
+          a.href = data.url;
+          a.download = `pixelstock-${video.slug}-${quality}.mp4`;
+          a.target = "_blank";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          toast("Download started", "success");
+        } else {
+          toast("Download link not available", "error");
+        }
+      } catch {
+        toast("Download failed", "error");
+      }
+      setDownloading(null);
+    },
+    [video.id, video.slug, toast]
+  );
+
+  const handleFollow = useCallback(async () => {
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/internal/users/${video.photographer.username}/follow`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      setFollowing(data.following);
+      toast(
+        data.following
+          ? `Following ${video.photographer.displayName}`
+          : "Unfollowed",
+        "success"
+      );
+    } catch {
+      toast("Could not update follow", "error");
+    }
+  }, [session, video.photographer, toast]);
+
+  const handleShare = useCallback(() => {
+    if (navigator.share) {
+      navigator.share({ title: video.title, url: window.location.href }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast("Link copied to clipboard", "success");
+    }
+  }, [video.title, toast]);
+
+  const handleCollect = useCallback(() => {
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
+    setCollectionModalOpen(true);
+  }, [session]);
+
+  // Best quality file for the player
+  const bestFile = video.files.length > 0 ? video.files[video.files.length - 1] : null;
+
+  return (
+    <div className="pb-16">
+      {/* Video Player */}
+      <div className="bg-surface-950 flex items-center justify-center min-h-[50vh] max-h-[85vh]">
+        <div className="relative w-full max-w-5xl mx-auto aspect-video">
+          {bestFile?.url ? (
+            <>
+              <video
+                ref={videoRef}
+                className="w-full h-full object-contain bg-black"
+                poster={video.thumbnailUrl}
+                controls={isPlaying}
+                playsInline
+                preload="metadata"
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onEnded={() => setIsPlaying(false)}
+              >
+                <source src={bestFile.url} type="video/mp4" />
+              </video>
+              {!isPlaying && (
+                <button
+                  onClick={handlePlayPause}
+                  className="absolute inset-0 flex items-center justify-center group/play"
+                  aria-label="Play video"
+                >
+                  <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover/play:bg-white/30 transition-colors">
+                    <svg className="w-10 h-10 ml-1 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="w-full h-full bg-black rounded-2xl flex items-center justify-center">
+              <div className="text-center text-white/40">
+                <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                  <svg className="w-10 h-10 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+                <p className="text-caption text-white/60">{video.title}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        {/* Actions Bar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-6 border-b border-surface-200">
+          {/* Photographer */}
+          <div className="flex items-center gap-3">
+            <Link href={`/profile/${video.photographer.username}`}>
+              <Avatar
+                src={video.photographer.avatarUrl}
+                name={video.photographer.displayName}
+                size="lg"
+              />
+            </Link>
+            <div>
+              <Link
+                href={`/profile/${video.photographer.username}`}
+                className="text-subtitle text-surface-900 hover:underline block"
+              >
+                {video.photographer.displayName}
+              </Link>
+              <button
+                onClick={handleFollow}
+                className={`text-caption transition-colors ${
+                  following ? "text-surface-500" : "text-brand hover:text-brand-600"
+                }`}
+              >
+                {following ? "Following" : "Follow"}
+              </button>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+            <button onClick={handleCollect} className="btn btn-sm btn-outline">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              Collect
+            </button>
+            <button
+              onClick={handleLike}
+              className={`btn btn-sm ${liked ? "btn-danger" : "btn-outline"}`}
+            >
+              <svg className="w-4 h-4" fill={liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              {liked ? "Liked" : "Like"}
+            </button>
+            <button onClick={handleShare} className="btn btn-sm btn-outline">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Share
+            </button>
+            <button
+              onClick={() => handleDownload(bestFile?.quality || "hd")}
+              disabled={downloading !== null}
+              className="btn btn-md btn-primary"
+            >
+              {downloading ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              )}
+              Free Download
+            </button>
+          </div>
+        </div>
+
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 pt-8">
+          {/* Main content */}
+          <div className="lg:col-span-2 space-y-8">
+            <div>
+              <h1 className="text-title text-surface-900 mb-2">{video.title}</h1>
+              {video.description && (
+                <p className="text-body text-surface-600 mb-3">{video.description}</p>
+              )}
+              {/* Stats */}
+              <div className="flex items-center gap-4 text-caption text-surface-500">
+                <span>{video.views.toLocaleString()} views</span>
+                <span>{video.downloads.toLocaleString()} downloads</span>
+                <span>{video.likes.toLocaleString()} likes</span>
+              </div>
+            </div>
+
+            {/* Tags */}
+            {video.tags.length > 0 && (
+              <div>
+                <h3 className="text-label text-surface-600 mb-3">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {video.tags.map((tag) => (
+                    <Link key={tag} href={`/search/${tag}`} className="chip">
+                      {tag}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* License */}
+            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+              <div className="flex items-center gap-2 text-emerald-800 font-medium text-caption">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Free to use
+              </div>
+              <p className="text-caption text-emerald-700 mt-1">
+                No attribution required.{" "}
+                <Link href="/license" className="underline">
+                  Learn more about the license
+                </Link>
+              </p>
+            </div>
+
+            {/* Report */}
+            <div>
+              <button
+                onClick={() => setReportModalOpen(true)}
+                className="text-micro text-surface-400 hover:text-surface-600 transition-colors"
+              >
+                Report this video
+              </button>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Video details */}
+            <div className="card p-5 space-y-4">
+              <h2 className="text-label text-surface-900">Video details</h2>
+              <dl className="space-y-3">
+                <MetaRow label="Duration" value={video.durationFormatted} />
+                <MetaRow label="Resolution" value={`${video.width} × ${video.height}`} />
+                {video.fps && <MetaRow label="Frame rate" value={`${video.fps} fps`} />}
+                <MetaRow
+                  label="Orientation"
+                  value={
+                    video.width > video.height
+                      ? "Landscape"
+                      : video.width < video.height
+                        ? "Portrait"
+                        : "Square"
+                  }
+                />
+                <MetaRow label="Format" value="MP4" />
+              </dl>
+            </div>
+
+            {/* Download options */}
+            <div className="card p-5 space-y-3">
+              <h2 className="text-label text-surface-900">Download</h2>
+              {video.files.length > 0 ? (
+                video.files.map((file) => (
+                  <button
+                    key={file.id}
+                    onClick={() => handleDownload(file.quality)}
+                    disabled={downloading === file.quality}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-50 transition-colors text-caption border border-surface-100"
+                  >
+                    <div className="flex items-center gap-2">
+                      {downloading === file.quality ? (
+                        <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      )}
+                      <span className="text-surface-700 font-medium">
+                        {QUALITY_LABELS[file.quality] || file.quality.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-surface-500">
+                        {file.width}×{file.height}
+                      </span>
+                      {file.fileSize !== "—" && (
+                        <span className="text-surface-400 ml-2">{file.fileSize}</span>
+                      )}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <p className="text-caption text-surface-400">No download files available</p>
+              )}
+              <p className="text-micro text-surface-400 mt-2">
+                Free for personal and commercial use.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Related Videos */}
+        {relatedVideos.length > 0 && (
+          <div className="mt-16 pt-10 border-t border-surface-200">
+            <h2 className="text-title text-surface-900 mb-6">More like this</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {relatedVideos.map((rv) => (
+                <Link
+                  key={rv.id}
+                  href={`/video/${rv.slug}-${rv.id}`}
+                  className="group relative rounded-xl overflow-hidden bg-surface-100 aspect-video"
+                >
+                  <img
+                    src={rv.thumbnailUrl}
+                    alt={rv.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {rv.duration && (
+                    <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-micro rounded font-medium">
+                      {formatDuration(rv.duration)}
+                    </span>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-caption text-white font-medium truncate">{rv.title}</p>
+                    <p className="text-micro text-white/70">{rv.photographer}</p>
+                  </div>
+                  {/* Play icon overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <svg className="w-5 h-5 ml-0.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      <SaveToCollectionModal
+        open={collectionModalOpen}
+        onClose={() => setCollectionModalOpen(false)}
+        mediaType="video"
+        mediaId={video.id}
+      />
+      <ReportContentModal
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        mediaType="video"
+        mediaId={video.id}
+      />
+    </div>
+  );
+}
+
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between text-caption">
+      <dt className="text-surface-500">{label}</dt>
+      <dd className="text-surface-700">{value}</dd>
+    </div>
+  );
+}
