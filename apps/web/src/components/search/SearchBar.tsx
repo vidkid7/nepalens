@@ -53,7 +53,8 @@ export default function SearchBar({ compact, defaultValue = "", autoFocus }: Sea
         const res = await fetch(`/api/internal/search/autocomplete?q=${encodeURIComponent(query.trim())}`);
         if (res.ok) {
           const data = await res.json();
-          setSuggestions(data.suggestions || []);
+          const raw = data.suggestions || [];
+          setSuggestions(raw.map((s: any) => typeof s === "string" ? s : s.text || String(s)));
         }
       } catch {
         setSuggestions([]);
