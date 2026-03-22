@@ -29,11 +29,16 @@ export default function Skeleton({
   );
 }
 
-export function PhotoCardSkeleton() {
-  const h = [250, 320, 200, 280, 350, 220][Math.floor(Math.random() * 6)];
+const SKELETON_HEIGHTS = [
+  [250, 320, 200, 280],
+  [350, 220, 280, 320],
+  [200, 350, 250, 220],
+];
+
+export function PhotoCardSkeleton({ height = 250 }: { height?: number }) {
   return (
     <div className="rounded-xl overflow-hidden">
-      <Skeleton variant="card" height={h} className="w-full" />
+      <Skeleton variant="card" height={height} className="w-full" />
     </div>
   );
 }
@@ -43,8 +48,8 @@ export function MasonryGridSkeleton({ columns = 3 }: { columns?: number }) {
     <div className="flex gap-4 px-4 sm:px-6">
       {Array.from({ length: columns }, (_, col) => (
         <div key={col} className="flex-1 flex flex-col gap-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <PhotoCardSkeleton key={i} />
+          {(SKELETON_HEIGHTS[col % SKELETON_HEIGHTS.length]).map((h, i) => (
+            <PhotoCardSkeleton key={i} height={h} />
           ))}
         </div>
       ))}
