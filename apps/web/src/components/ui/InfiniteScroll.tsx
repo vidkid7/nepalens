@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, ReactNode } from "react";
+import { MessageLoading } from "@/components/ui/message-loading";
 
 interface InfiniteScrollProps {
   onLoadMore: () => void;
@@ -24,7 +25,7 @@ export default function InfiniteScroll({
           onLoadMore();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "600px" } // Trigger earlier for seamless feel
     );
 
     if (sentinelRef.current) observer.observe(sentinelRef.current);
@@ -35,9 +36,17 @@ export default function InfiniteScroll({
     <>
       {children}
       <div ref={sentinelRef} className="h-4" />
-      {loading && (
-        <div className="flex justify-center py-8">
-          <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      {loading && hasMore && (
+        <div className="flex flex-col items-center justify-center py-12 gap-3 animate-in fade-in duration-300">
+          <div className="flex items-center gap-2 px-5 py-2.5 bg-surface-50 rounded-full shadow-sm border border-surface-100">
+            <MessageLoading />
+            <span className="text-caption text-surface-500 font-medium">Loading more photos</span>
+          </div>
+        </div>
+      )}
+      {!hasMore && (
+        <div className="flex justify-center py-10">
+          <span className="text-caption text-surface-400">You&apos;ve seen it all ✨</span>
         </div>
       )}
     </>

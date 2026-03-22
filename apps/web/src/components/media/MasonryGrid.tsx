@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import PhotoCard from "./PhotoCard";
 
 interface MasonryGridProps {
@@ -20,14 +20,52 @@ interface MasonryGridProps {
   gap?: number;
 }
 
+function AnimatedCard({ photo, index }: { photo: MasonryGridProps["photos"][0]; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "100px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="masonry-item"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(16px)",
+        transition: `opacity 0.5s ease ${(index % 4) * 0.06}s, transform 0.5s ease ${(index % 4) * 0.06}s`,
+      }}
+    >
+      <PhotoCard photo={photo} />
+    </div>
+  );
+}
+
 export default function MasonryGrid({ photos, columns = 3, gap = 16 }: MasonryGridProps) {
   const columnItems = useMemo(() => {
-    const result: (typeof photos)[] = Array.from({ length: columns }, () => []);
+    const result: { photo: (typeof photos)[0]; globalIndex: number }[][] = Array.from(
+      { length: columns },
+      () => []
+    );
     const heights = new Array(columns).fill(0);
 
-    photos.forEach((photo) => {
+    photos.forEach((photo, i) => {
       const shortestCol = heights.indexOf(Math.min(...heights));
-      result[shortestCol].push(photo);
+      result[shortestCol].push({ photo, globalIndex: i });
       heights[shortestCol] += photo.height / photo.width;
     });
 
@@ -38,8 +76,8 @@ export default function MasonryGrid({ photos, columns = 3, gap = 16 }: MasonryGr
     <div className="flex" style={{ gap }}>
       {columnItems.map((col, i) => (
         <div key={i} className="flex-1 flex flex-col" style={{ gap }}>
-          {col.map((photo) => (
-            <PhotoCard key={photo.id} photo={photo} />
+          {col.map(({ photo, globalIndex }) => (
+            <AnimatedCard key={photo.id} photo={photo} index={globalIndex} />
           ))}
         </div>
       ))}
