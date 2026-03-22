@@ -18,7 +18,11 @@ interface Photo {
   blur_hash?: string | null;
 }
 
-export default function HomeFeed() {
+interface HomeFeedProps {
+  sort?: string;
+}
+
+export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -40,17 +44,19 @@ export default function HomeFeed() {
 
   const fetchPhotos = useCallback(async (pageNum: number) => {
     try {
-      const res = await fetch(`/api/internal/photos?page=${pageNum}&per_page=30`);
+      const res = await fetch(`/api/internal/photos?page=${pageNum}&per_page=30&sort=${sort}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       return data.photos as Photo[];
     } catch {
       return generatePlaceholders(pageNum);
     }
-  }, []);
+  }, [sort]);
 
   useEffect(() => {
     setLoading(true);
+    setPage(1);
+    setHasMore(true);
     fetchPhotos(1).then((data) => {
       setPhotos(data);
       setLoading(false);

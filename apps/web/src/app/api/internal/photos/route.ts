@@ -9,11 +9,19 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const perPage = Math.min(parseInt(searchParams.get("per_page") || "30"), 80);
   const cursor = searchParams.get("cursor");
+  const sort = searchParams.get("sort") || "curated";
 
   const where = {
     status: "approved" as const,
     ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
   };
+
+  const orderBy =
+    sort === "newest"
+      ? [{ createdAt: "desc" as const }]
+      : sort === "popular"
+        ? [{ viewsCount: "desc" as const }, { createdAt: "desc" as const }]
+        : [{ isCurated: "desc" as const }, { isFeatured: "desc" as const }, { createdAt: "desc" as const }];
 
   const [photos, total] = await Promise.all([
     prisma.photo.findMany({
@@ -22,7 +30,7 @@ export async function GET(request: NextRequest) {
         user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
         tags: { include: { tag: true } },
       },
-      orderBy: [{ isCurated: "desc" }, { isFeatured: "desc" }, { createdAt: "desc" }],
+      orderBy,
       take: perPage,
       skip: cursor ? 0 : (page - 1) * perPage,
     }),

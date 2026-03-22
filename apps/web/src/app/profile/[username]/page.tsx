@@ -20,6 +20,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const username = decodeURIComponent(params.username);
+  const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
 
   const user = await prisma.user.findUnique({
     where: { username },
@@ -33,6 +34,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         select: {
           photos: { where: { status: "approved" } },
           videos: { where: { status: "approved" } },
+          followers: true,
+          following: true,
+          collections: { where: { isPrivate: false } },
         },
       },
     },
@@ -40,15 +44,28 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   if (!user) notFound();
 
-  const totalViews = await prisma.photo.aggregate({
-    where: { userId: user.id, status: "approved" },
-    _sum: { viewsCount: true },
-  });
+  const [totalViews, totalDownloads, topPhoto] = await Promise.all([
+    prisma.photo.aggregate({
+      where: { userId: user.id, status: "approved" },
+      _sum: { viewsCount: true },
+    }),
+    prisma.photo.aggregate({
+      where: { userId: user.id, status: "approved" },
+      _sum: { downloadsCount: true },
+    }),
+    // Get the user's most popular photo for potential cover
+    prisma.photo.findFirst({
+      where: { userId: user.id, status: "approved" },
+      orderBy: { viewsCount: "desc" },
+      select: { id: true, cdnKey: true, originalUrl: true },
+    }),
+  ]);
 
-  const totalDownloads = await prisma.photo.aggregate({
-    where: { userId: user.id, status: "approved" },
-    _sum: { downloadsCount: true },
-  });
+  const topPhotoUrl = topPhoto
+    ? topPhoto.cdnKey
+      ? `${cdnBase}/photos/${topPhoto.id}/large2x.jpg`
+      : topPhoto.originalUrl
+    : null;
 
   return (
     <ProfileContent
@@ -60,24 +77,31 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         location: user.location,
         websiteUrl: user.websiteUrl,
         avatarUrl: user.avatarUrl,
-        coverUrl: user.coverUrl,
-        followersCount: user.followersCount,
-        followingCount: user.followingCount,
+        coverUrl: user.coverUrl || topPhotoUrl,
+        followersCount: user._count.followers,
+        followingCount: user._count.following,
         isVerified: user.isVerified,
       }}
       stats={{
         photos: user._count.photos,
         videos: user._count.videos,
+        collections: user._count.collections,
         totalViews: Number(totalViews._sum.viewsCount || 0),
         totalDownloads: Number(totalDownloads._sum.downloadsCount || 0),
+        followers: user._count.followers,
+        following: user._count.following,
       }}
-      photos={user.photos.map((p) => ({
+      initialPhotos={user.photos.map((p) => ({
         id: p.id,
         slug: p.slug,
         alt: p.altText,
         width: p.width,
         height: p.height,
-        src: { large: p.originalUrl },
+        src: {
+          large: p.cdnKey
+            ? `${cdnBase}/photos/${p.id}/large.jpg`
+            : p.originalUrl,
+        },
         photographer: user.displayName || user.username,
         photographer_url: `/profile/${user.username}`,
         avg_color: p.dominantColor,
