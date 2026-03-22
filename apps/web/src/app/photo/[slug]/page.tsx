@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import PhotoDetailClient from "./PhotoDetailClient";
 
 interface PhotoPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 async function getPhoto(slug: string) {
@@ -53,7 +53,8 @@ async function getRelatedPhotos(photoId: string, tags: string[]) {
 }
 
 export async function generateMetadata({ params }: PhotoPageProps): Promise<Metadata> {
-  const photo = await getPhoto(params.slug);
+  const { slug } = await params;
+  const photo = await getPhoto(slug);
   const title = photo?.altText || photo?.description || "Photo";
 
   return {
@@ -66,8 +67,9 @@ export async function generateMetadata({ params }: PhotoPageProps): Promise<Meta
 }
 
 export default async function PhotoDetailPage({ params }: PhotoPageProps) {
-  const photo = await getPhoto(params.slug);
-  const parts = params.slug.split("-");
+  const { slug } = await params;
+  const photo = await getPhoto(slug);
+  const parts = slug.split("-");
   const photoId = parts[parts.length - 1];
   const fallbackTitle = parts.slice(0, -1).join(" ");
 

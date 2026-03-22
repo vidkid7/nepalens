@@ -6,15 +6,16 @@ import { authOptions } from "@/lib/auth";
 // POST /api/internal/videos/[id]/download — Track download and return URL
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id || null;
   const body = await request.json().catch(() => ({}));
   const quality = body.quality || "hd";
 
   const video = await prisma.video.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { files: true },
   });
 
@@ -25,7 +26,7 @@ export async function POST(
   await prisma.download.create({
     data: {
       mediaType: "video",
-      mediaId: params.id,
+      mediaId: id,
       userId,
       ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip"),
       userAgent: request.headers.get("user-agent")?.substring(0, 500),
@@ -35,7 +36,7 @@ export async function POST(
   });
 
   await prisma.video.update({
-    where: { id: params.id },
+    where: { id },
     data: { downloadsCount: { increment: 1 } },
   });
 

@@ -2,18 +2,19 @@ import { Metadata } from "next";
 import SearchPageClient from "./SearchResults";
 
 interface SearchPageProps {
-  params: { params?: string[] };
-  searchParams: {
+  params: Promise<{ params?: string[] }>;
+  searchParams: Promise<{
     orientation?: string;
     size?: string;
     color?: string;
     sort?: string;
     tab?: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: SearchPageProps): Promise<Metadata> {
-  const keyword = params.params?.[0] ? decodeURIComponent(params.params[0]) : "";
+  const resolvedParams = await params;
+  const keyword = resolvedParams.params?.[0] ? decodeURIComponent(resolvedParams.params[0]) : "";
   return {
     title: keyword
       ? `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Photos & Videos`
@@ -24,18 +25,20 @@ export async function generateMetadata({ params }: SearchPageProps): Promise<Met
   };
 }
 
-export default function SearchPage({ params, searchParams }: SearchPageProps) {
-  const keyword = params.params?.[0] ? decodeURIComponent(params.params[0]) : "";
+export default async function SearchPage({ params, searchParams }: SearchPageProps) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const keyword = resolvedParams.params?.[0] ? decodeURIComponent(resolvedParams.params[0]) : "";
 
   return (
     <SearchPageClient
       keyword={keyword}
       initialFilters={{
-        orientation: searchParams.orientation || "",
-        size: searchParams.size || "",
-        color: searchParams.color || "",
-        sort: searchParams.sort || "",
-        tab: searchParams.tab || "photos",
+        orientation: resolvedSearchParams.orientation || "",
+        size: resolvedSearchParams.size || "",
+        color: resolvedSearchParams.color || "",
+        sort: resolvedSearchParams.sort || "",
+        tab: resolvedSearchParams.tab || "photos",
       }}
     />
   );

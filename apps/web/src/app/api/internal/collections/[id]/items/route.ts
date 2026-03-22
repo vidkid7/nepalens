@@ -6,8 +6,9 @@ import { authOptions } from "@/lib/auth";
 // POST /api/internal/collections/[id]/items — Add media to collection
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,7 +16,7 @@ export async function POST(
 
   const userId = (session.user as any).id;
   const collection = await prisma.collection.findFirst({
-    where: { id: params.id, userId },
+    where: { id, userId },
   });
 
   if (!collection) {
@@ -28,7 +29,7 @@ export async function POST(
   }
 
   const existing = await prisma.collectionItem.findUnique({
-    where: { collectionId_mediaType_mediaId: { collectionId: params.id, mediaType, mediaId } },
+    where: { collectionId_mediaType_mediaId: { collectionId: id, mediaType, mediaId } },
   });
 
   if (existing) {
@@ -36,11 +37,11 @@ export async function POST(
   }
 
   await prisma.collectionItem.create({
-    data: { collectionId: params.id, mediaType, mediaId },
+    data: { collectionId: id, mediaType, mediaId },
   });
 
   await prisma.collection.update({
-    where: { id: params.id },
+    where: { id },
     data: { itemsCount: { increment: 1 } },
   });
 
@@ -50,8 +51,9 @@ export async function POST(
 // DELETE /api/internal/collections/[id]/items — Remove media from collection
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -59,7 +61,7 @@ export async function DELETE(
 
   const userId = (session.user as any).id;
   const collection = await prisma.collection.findFirst({
-    where: { id: params.id, userId },
+    where: { id, userId },
   });
 
   if (!collection) {
@@ -69,11 +71,11 @@ export async function DELETE(
   const { mediaType, mediaId } = await request.json();
 
   await prisma.collectionItem.deleteMany({
-    where: { collectionId: params.id, mediaType, mediaId },
+    where: { collectionId: id, mediaType, mediaId },
   });
 
   await prisma.collection.update({
-    where: { id: params.id },
+    where: { id },
     data: { itemsCount: { decrement: 1 } },
   });
 

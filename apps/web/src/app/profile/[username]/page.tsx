@@ -4,11 +4,12 @@ import { Metadata } from "next";
 import ProfileContent from "./ProfileContent";
 
 interface ProfilePageProps {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
-  const username = decodeURIComponent(params.username);
+  const { username: rawUsername } = await params;
+  const username = decodeURIComponent(rawUsername);
   const user = await prisma.user.findUnique({ where: { username } });
   if (!user) return { title: "User Not Found" };
 
@@ -19,7 +20,8 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
-  const username = decodeURIComponent(params.username);
+  const { username: rawUsername } = await params;
+  const username = decodeURIComponent(rawUsername);
   const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
 
   const user = await prisma.user.findUnique({

@@ -6,15 +6,16 @@ import { authOptions } from "@/lib/auth";
 // POST /api/internal/photos/[id]/like — Toggle like
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const userId = (session.user as any).id;
-  const photoId = params.id;
+  const photoId = id;
 
   const existing = await prisma.like.findUnique({
     where: { userId_mediaType_mediaId: { userId, mediaType: "photo", mediaId: photoId } },
@@ -44,8 +45,9 @@ export async function POST(
 // GET /api/internal/photos/[id]/like — Check like status
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ liked: false });
@@ -53,7 +55,7 @@ export async function GET(
 
   const userId = (session.user as any).id;
   const existing = await prisma.like.findUnique({
-    where: { userId_mediaType_mediaId: { userId, mediaType: "photo", mediaId: params.id } },
+    where: { userId_mediaType_mediaId: { userId, mediaType: "photo", mediaId: id } },
   });
 
   return NextResponse.json({ liked: !!existing });

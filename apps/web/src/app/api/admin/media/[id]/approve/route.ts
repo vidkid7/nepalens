@@ -6,8 +6,9 @@ import { authOptions } from "@/lib/auth";
 // PATCH /api/admin/media/[id]/approve
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user || !(session.user as any).isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -17,14 +18,14 @@ export async function PATCH(
   const feature = body.feature || false;
   const curate = body.curate || false;
 
-  const photo = await prisma.photo.findUnique({ where: { id: params.id } });
+  const photo = await prisma.photo.findUnique({ where: { id } });
   if (!photo) {
     // Try video
-    const video = await prisma.video.findUnique({ where: { id: params.id } });
+    const video = await prisma.video.findUnique({ where: { id } });
     if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     await prisma.video.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: "approved",
         isFeatured: feature,
@@ -34,7 +35,7 @@ export async function PATCH(
   }
 
   await prisma.photo.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       status: "approved",
       approvedBy: (session.user as any).id,

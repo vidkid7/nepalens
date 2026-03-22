@@ -6,14 +6,15 @@ import { authOptions } from "@/lib/auth";
 // POST /api/internal/photos/[id]/download — Track download and return URL
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id || null;
   const body = await request.json().catch(() => ({}));
   const sizeVariant = body.size || "original";
 
-  const photo = await prisma.photo.findUnique({ where: { id: params.id } });
+  const photo = await prisma.photo.findUnique({ where: { id } });
   if (!photo) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -22,7 +23,7 @@ export async function POST(
   await prisma.download.create({
     data: {
       mediaType: "photo",
-      mediaId: params.id,
+      mediaId: id,
       userId,
       ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip"),
       userAgent: request.headers.get("user-agent")?.substring(0, 500),
@@ -33,7 +34,7 @@ export async function POST(
 
   // Increment download count
   await prisma.photo.update({
-    where: { id: params.id },
+    where: { id },
     data: { downloadsCount: { increment: 1 } },
   });
 

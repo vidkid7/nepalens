@@ -123,11 +123,12 @@ async function getTrendingPhotos() {
 }
 
 interface HomePageProps {
-  searchParams: { sort?: string };
+  searchParams: Promise<{ sort?: string }>;
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const sort = searchParams.sort || "curated";
+  const resolvedSearchParams = await searchParams;
+  const sort = resolvedSearchParams.sort || "curated";
 
   const [hero, collections, curatedPhotos, trendingPhotos] = await Promise.all([
     getHeroImage(),

@@ -6,15 +6,16 @@ import { authOptions } from "@/lib/auth";
 // POST /api/internal/users/[username]/follow — Toggle follow
 export async function POST(
   request: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
+  const { username } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const followerId = (session.user as any).id;
-  const target = await prisma.user.findUnique({ where: { username: params.username } });
+  const target = await prisma.user.findUnique({ where: { username } });
 
   if (!target) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -48,15 +49,16 @@ export async function POST(
 // GET /api/internal/users/[username]/follow — Check follow status
 export async function GET(
   request: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
+  const { username } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ following: false });
   }
 
   const followerId = (session.user as any).id;
-  const target = await prisma.user.findUnique({ where: { username: params.username } });
+  const target = await prisma.user.findUnique({ where: { username } });
   if (!target) return NextResponse.json({ following: false });
 
   const existing = await prisma.follow.findUnique({

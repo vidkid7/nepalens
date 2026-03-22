@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import VideoDetailClient from "./VideoDetailClient";
 
 interface VideoPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 async function getVideo(slug: string) {
@@ -74,8 +74,9 @@ function formatFileSize(bytes: bigint | null): string {
 }
 
 export async function generateMetadata({ params }: VideoPageProps): Promise<Metadata> {
-  const video = await getVideo(params.slug);
-  const parts = params.slug.split("-");
+  const { slug } = await params;
+  const video = await getVideo(slug);
+  const parts = slug.split("-");
   const fallbackName = parts.slice(0, -1).join(" ");
   const title = video?.altText || video?.description || fallbackName || "Video";
 
@@ -91,8 +92,9 @@ export async function generateMetadata({ params }: VideoPageProps): Promise<Meta
 }
 
 export default async function VideoDetailPage({ params }: VideoPageProps) {
-  const video = await getVideo(params.slug);
-  const parts = params.slug.split("-");
+  const { slug } = await params;
+  const video = await getVideo(slug);
+  const parts = slug.split("-");
   const videoId = parts[parts.length - 1];
   const fallbackTitle = parts.slice(0, -1).join(" ");
 

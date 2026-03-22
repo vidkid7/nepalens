@@ -5,13 +5,14 @@ import { validateApiKey, apiErrorResponse } from "@/lib/apiAuth";
 // GET /api/v1/photos/[id]
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const { allowed, headers } = await validateApiKey(request);
   if (!allowed) return apiErrorResponse(401, "Invalid or missing API key");
 
   const photo = await prisma.photo.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: { select: { id: true, username: true, displayName: true } },
       tags: { include: { tag: true } },
