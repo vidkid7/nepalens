@@ -2,12 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@pixelstock/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { cached, cacheDel, CacheTTL } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
-
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-
-let leaderboardCache: { data: any; computedAt: Date } | null = null;
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -110,35 +107,22 @@ export async function GET(request: NextRequest) {
   const period = searchParams.get("period") || "all-time";
   const sort = searchParams.get("sort") || "views";
 
-  const cacheKey = `${period}:${sort}`;
+  const cacheKey = `leaderboard:${period}:${sort}`;
 
-  if (
-    leaderboardCache &&
-    leaderboardCache.data._cacheKey === cacheKey &&
-    Date.now() - leaderboardCache.computedAt.getTime() < CACHE_TTL_MS
-  ) {
-    return NextResponse.json({
-      leaderboard: leaderboardCache.data.leaderboard,
-      period,
-      sort,
-      lastRefreshed: leaderboardCache.computedAt.toISOString(),
-      cached: true,
-    });
-  }
-
-  const leaderboard = await computeLeaderboard(period, sort);
-
-  leaderboardCache = {
-    data: { leaderboard, _cacheKey: cacheKey },
-    computedAt: new Date(),
-  };
+  const result = await cached(cacheKey, CacheTTL.LEADERBOARD, async () => {
+    const leaderboard = await computeLeaderboard(period, sort);
+    return {
+      leaderboard,
+      computedAt: new Date().toISOString(),
+    };
+  });
 
   return NextResponse.json({
-    leaderboard,
+    leaderboard: result.leaderboard,
     period,
     sort,
-    lastRefreshed: leaderboardCache.computedAt.toISOString(),
-    cached: false,
+    lastRefreshed: result.computedAt,
+    cached: true,
   });
 }
 
@@ -154,7 +138,13 @@ export async function PATCH(request: NextRequest) {
   const adminId = (session.user as any).id;
 
   if (action === "refresh") {
-    leaderboardCache = null;
+    // Invalidate all leaderboard cache keys
+    await Promise.all([
+      cacheDel("leaderboard:all-time:views"),
+      cacheDel("leaderboard:all-time:downloads"),
+      cacheDel("leaderboard:30d:views"),
+      cacheDel("leaderboard:30d:downloads"),
+    ]).catch(() => {});
 
     await prisma.auditLog.create({
       data: {
@@ -188,7 +178,12 @@ export async function PATCH(request: NextRequest) {
     });
 
     // Invalidate cache so next GET reflects the exclusion
-    leaderboardCache = null;
+    await Promise.all([
+      cacheDel("leaderboard:all-time:views"),
+      cacheDel("leaderboard:all-time:downloads"),
+      cacheDel("leaderboard:30d:views"),
+      cacheDel("leaderboard:30d:downloads"),
+    ]).catch(() => {});
 
     return NextResponse.json({
       success: true,
@@ -213,7 +208,12 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
-    leaderboardCache = null;
+    await Promise.all([
+      cacheDel("leaderboard:all-time:views"),
+      cacheDel("leaderboard:all-time:downloads"),
+      cacheDel("leaderboard:30d:views"),
+      cacheDel("leaderboard:30d:downloads"),
+    ]).catch(() => {});
 
     return NextResponse.json({
       success: true,

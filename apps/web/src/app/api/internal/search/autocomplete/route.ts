@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@pixelstock/database";
+import { cached, CacheTTL } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -10,14 +11,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ suggestions: [] });
   }
 
-  const tags = await prisma.tag.findMany({
-    where: { name: { startsWith: query.toLowerCase() } },
-    orderBy: { photosCount: "desc" },
-    take: 8,
-    select: { name: true, photosCount: true },
-  });
+  const prefix = query.toLowerCase();
+  const tags = await cached(
+    `autocomplete:${prefix}`,
+    CacheTTL.AUTOCOMPLETE,
+    () =>
+      prisma.tag.findMany({
+        where: { name: { startsWith: prefix } },
+        orderBy: { photosCount: "desc" },
+        take: 8,
+        select: { name: true, photosCount: true },
+      })
+  );
 
   return NextResponse.json({
-    suggestions: tags.map((t) => ({ text: t.name, count: t.photosCount })),
+    suggestions: tags.map((t: any) => ({ text: t.name, count: t.photosCount })),
   });
 }

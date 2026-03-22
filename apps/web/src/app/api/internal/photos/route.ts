@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@pixelstock/database";
+import { cached, cacheDel, CacheKeys, CacheTTL } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
   const userFilter = searchParams.get("user");
   const likedFilter = searchParams.get("liked");
 
-  // If requesting liked photos, require auth
+  // If requesting liked photos, require auth (not cached — user-specific)
   if (likedFilter === "true") {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -43,7 +44,6 @@ export async function GET(request: NextRequest) {
       prisma.like.count({ where: { userId, mediaType: "photo" } }),
     ]);
 
-    // Preserve the order from likes query
     const photosMap = new Map(photos.map((p) => [p.id, p]));
     const ordered = photoIds.map((id) => photosMap.get(id)).filter(Boolean) as typeof photos;
 
@@ -58,73 +58,67 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // If filtering by username, look up the user
-  let userIdFilter: string | undefined;
+  // User-specific feed (not cached)
   if (userFilter) {
-    const targetUser = await prisma.user.findUnique({
-      where: { username: userFilter },
-      select: { id: true },
-    });
-    if (!targetUser) {
-      return NextResponse.json({ photos: [], total_results: 0, page, per_page: perPage });
-    }
-    userIdFilter = targetUser.id;
+    return fetchUserPhotos(userFilter, page, perPage, sort);
   }
 
-  const where: any = {
-    status: "approved",
-    ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
-    ...(userIdFilter ? { userId: userIdFilter } : {}),
-  };
+  // Public feed — CACHED
+  const cacheKey = CacheKeys.photoFeed(sort, cursor ? 0 : page, perPage);
+  const result = await cached(cacheKey, CacheTTL.FEED, async () => {
+    const where: any = {
+      status: "approved",
+      ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
+    };
 
-  const orderBy =
-    sort === "newest"
-      ? [{ createdAt: "desc" as const }]
-      : sort === "popular"
-        ? [{ viewsCount: "desc" as const }, { createdAt: "desc" as const }]
-        : [{ isCurated: "desc" as const }, { isFeatured: "desc" as const }, { createdAt: "desc" as const }];
+    const orderBy =
+      sort === "newest"
+        ? [{ createdAt: "desc" as const }]
+        : sort === "popular"
+          ? [{ viewsCount: "desc" as const }, { createdAt: "desc" as const }]
+          : [{ isCurated: "desc" as const }, { isFeatured: "desc" as const }, { createdAt: "desc" as const }];
 
-  const [photos, total] = await Promise.all([
-    prisma.photo.findMany({
-      where,
-      include: {
-        user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
-        tags: { include: { tag: true } },
-      },
-      orderBy,
-      take: perPage,
-      skip: cursor ? 0 : (page - 1) * perPage,
-    }),
-    prisma.photo.count({ where }),
-  ]);
+    const [photos, total] = await Promise.all([
+      prisma.photo.findMany({
+        where,
+        include: {
+          user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+          tags: { include: { tag: true } },
+        },
+        orderBy,
+        take: perPage,
+        skip: cursor ? 0 : (page - 1) * perPage,
+      }),
+      prisma.photo.count({ where }),
+    ]);
 
-  // Check if current user liked any of these photos
-  let likedIds = new Set<string>();
-  const session = await getServerSession(authOptions);
-  if (session?.user) {
-    const userId = (session.user as any).id;
-    const photoIds = photos.map((p) => p.id);
-    if (photoIds.length > 0) {
-      const likes = await prisma.like.findMany({
-        where: { userId, mediaType: "photo", mediaId: { in: photoIds } },
-        select: { mediaId: true },
-      });
-      likedIds = new Set(likes.map((l) => l.mediaId));
-    }
-  }
+    const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
+    const formatted = photos.map((p) => formatPhoto(p, cdnBase, false));
+    const nextCursor = photos.length > 0 ? photos[photos.length - 1].createdAt.toISOString() : null;
 
-  const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
-  const formatted = photos.map((p) => formatPhoto(p, cdnBase, likedIds.has(p.id)));
-
-  const nextCursor = photos.length > 0 ? photos[photos.length - 1].createdAt.toISOString() : null;
-
-  return NextResponse.json({
-    photos: formatted,
-    total_results: total,
-    page,
-    per_page: perPage,
-    next_cursor: nextCursor,
+    return {
+      photos: formatted,
+      total_results: total,
+      page,
+      per_page: perPage,
+      next_cursor: nextCursor,
+    };
   });
+
+  // Overlay per-user liked status if logged in (fast single query)
+  const session = await getServerSession(authOptions);
+  if (session?.user && result.photos.length > 0) {
+    const userId = (session.user as any).id;
+    const photoIds = result.photos.map((p: any) => p.id);
+    const likes = await prisma.like.findMany({
+      where: { userId, mediaType: "photo", mediaId: { in: photoIds } },
+      select: { mediaId: true },
+    });
+    const likedIds = new Set(likes.map((l) => l.mediaId));
+    result.photos = result.photos.map((p: any) => ({ ...p, liked: likedIds.has(p.id) }));
+  }
+
+  return NextResponse.json(result);
 }
 
 // POST /api/internal/photos — Upload a new photo
@@ -232,7 +226,50 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  // Invalidate feed caches so new upload appears
+  await Promise.all([
+    cacheDel(CacheKeys.photoFeed("curated", 1, 30)),
+    cacheDel(CacheKeys.photoFeed("newest", 1, 30)),
+    cacheDel(CacheKeys.photoFeed("popular", 1, 30)),
+  ]).catch(() => {});
+
   return NextResponse.json({ photo: result }, { status: 201 });
+}
+
+// Fetch photos for a specific user (not cached — user-specific)
+async function fetchUserPhotos(username: string, page: number, perPage: number, sort: string) {
+  const targetUser = await prisma.user.findUnique({
+    where: { username },
+    select: { id: true },
+  });
+  if (!targetUser) {
+    return NextResponse.json({ photos: [], total_results: 0, page, per_page: perPage });
+  }
+
+  const where: any = { status: "approved", userId: targetUser.id };
+  const orderBy =
+    sort === "popular"
+      ? [{ viewsCount: "desc" as const }, { createdAt: "desc" as const }]
+      : [{ createdAt: "desc" as const }];
+
+  const [photos, total] = await Promise.all([
+    prisma.photo.findMany({
+      where,
+      include: {
+        user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+        tags: { include: { tag: true } },
+      },
+      orderBy,
+      take: perPage,
+      skip: (page - 1) * perPage,
+    }),
+    prisma.photo.count({ where }),
+  ]);
+
+  const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
+  const formatted = photos.map((p) => formatPhoto(p, cdnBase, false));
+
+  return NextResponse.json({ photos: formatted, total_results: total, page, per_page: perPage });
 }
 
 // Shared formatter for photo responses

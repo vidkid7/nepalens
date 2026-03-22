@@ -2,6 +2,7 @@ import { prisma } from "@pixelstock/database";
 import Link from "next/link";
 import { Metadata } from "next";
 import Avatar from "@/components/ui/Avatar";
+import { cached, CacheTTL } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -16,27 +17,33 @@ export default async function DiscoverPage() {
   let trendingTags: any[] = [];
 
   try {
-    categories = await prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: { position: "asc" },
-    });
-
-    featuredPhotographers = await prisma.user.findMany({
-      where: { isContributor: true, isVerified: true },
-      select: {
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        _count: { select: { photos: { where: { status: "approved" } } } },
-      },
-      orderBy: { followersCount: "desc" },
-      take: 8,
-    });
-
-    trendingTags = await prisma.tag.findMany({
-      orderBy: { photosCount: "desc" },
-      take: 24,
-    });
+    [categories, featuredPhotographers, trendingTags] = await Promise.all([
+      cached("discover:categories", CacheTTL.DISCOVER, () =>
+        prisma.category.findMany({
+          where: { isActive: true },
+          orderBy: { position: "asc" },
+        })
+      ),
+      cached("discover:photographers", CacheTTL.DISCOVER, () =>
+        prisma.user.findMany({
+          where: { isContributor: true, isVerified: true },
+          select: {
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            _count: { select: { photos: { where: { status: "approved" } } } },
+          },
+          orderBy: { followersCount: "desc" },
+          take: 8,
+        })
+      ),
+      cached("discover:tags", CacheTTL.DISCOVER, () =>
+        prisma.tag.findMany({
+          orderBy: { photosCount: "desc" },
+          take: 24,
+        })
+      ),
+    ]);
   } catch {
     // DB not available — show empty state
   }

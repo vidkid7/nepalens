@@ -3,6 +3,7 @@ import SearchBar from "@/components/search/SearchBar";
 import HomeFeed from "./HomeFeed";
 import HomeControls from "./HomeControls";
 import { prisma } from "@pixelstock/database";
+import { cached, CacheKeys, CacheTTL } from "@/lib/cache";
 
 const TRENDING_TAGS = [
   "Nature", "City", "Business", "Technology", "Food",
@@ -20,106 +21,112 @@ function getPhotoUrl(
 }
 
 async function getHeroImage() {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  return cached(CacheKeys.heroImage(), CacheTTL.HOME, async () => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    // Try active hero image for today or most recent
-    const hero = await prisma.heroImage.findFirst({
-      where: { isActive: true, displayDate: { lte: today } },
-      orderBy: { displayDate: "desc" },
-      include: {
-        photo: {
-          include: { user: { select: { username: true, displayName: true } } },
+      const hero = await prisma.heroImage.findFirst({
+        where: { isActive: true, displayDate: { lte: today } },
+        orderBy: { displayDate: "desc" },
+        include: {
+          photo: {
+            include: { user: { select: { username: true, displayName: true } } },
+          },
         },
-      },
-    });
+      });
 
-    if (hero) return hero;
+      if (hero) return hero;
 
-    // Fallback: recent featured or curated photo
-    const featured = await prisma.photo.findFirst({
-      where: {
-        status: "approved",
-        OR: [{ isFeatured: true }, { isCurated: true }],
-      },
-      orderBy: { createdAt: "desc" },
-      include: { user: { select: { username: true, displayName: true } } },
-    });
+      const featured = await prisma.photo.findFirst({
+        where: {
+          status: "approved",
+          OR: [{ isFeatured: true }, { isCurated: true }],
+        },
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { username: true, displayName: true } } },
+      });
 
-    if (featured) {
-      return {
-        id: featured.id,
-        photo: featured,
-        displayDate: featured.createdAt,
-      };
+      if (featured) {
+        return {
+          id: featured.id,
+          photo: featured,
+          displayDate: featured.createdAt,
+        };
+      }
+
+      return null;
+    } catch {
+      return null;
     }
-
-    return null;
-  } catch {
-    return null;
-  }
+  });
 }
 
 async function getFeaturedCollections() {
-  try {
-    const collections = await prisma.collection.findMany({
-      where: { isPrivate: false },
-      take: 6,
-      orderBy: { updatedAt: "desc" },
-      include: {
-        _count: { select: { items: true } },
-        user: { select: { username: true, displayName: true } },
-        items: {
-          take: 1,
-          orderBy: { position: "asc" },
-          where: { mediaType: "photo" },
-          include: {
-            photo: {
-              select: {
-                id: true,
-                cdnKey: true,
-                originalUrl: true,
-                dominantColor: true,
+  return cached("home:collections", CacheTTL.HOME, async () => {
+    try {
+      const collections = await prisma.collection.findMany({
+        where: { isPrivate: false },
+        take: 6,
+        orderBy: { updatedAt: "desc" },
+        include: {
+          _count: { select: { items: true } },
+          user: { select: { username: true, displayName: true } },
+          items: {
+            take: 1,
+            orderBy: { position: "asc" },
+            where: { mediaType: "photo" },
+            include: {
+              photo: {
+                select: {
+                  id: true,
+                  cdnKey: true,
+                  originalUrl: true,
+                  dominantColor: true,
+                },
               },
             },
           },
         },
-      },
-    });
-    return collections;
-  } catch {
-    return [];
-  }
+      });
+      return collections;
+    } catch {
+      return [];
+    }
+  });
 }
 
 async function getCuratedPhotos() {
-  try {
-    return await prisma.photo.findMany({
-      where: { status: "approved", isCurated: true },
-      take: 8,
-      orderBy: { curatedAt: "desc" },
-      include: { user: { select: { username: true, displayName: true } } },
-    });
-  } catch {
-    return [];
-  }
+  return cached("home:curated", CacheTTL.HOME, async () => {
+    try {
+      return await prisma.photo.findMany({
+        where: { status: "approved", isCurated: true },
+        take: 8,
+        orderBy: { curatedAt: "desc" },
+        include: { user: { select: { username: true, displayName: true } } },
+      });
+    } catch {
+      return [];
+    }
+  });
 }
 
 async function getTrendingPhotos() {
-  try {
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
+  return cached("home:trending", CacheTTL.HOME, async () => {
+    try {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
 
-    return await prisma.photo.findMany({
-      where: { status: "approved", updatedAt: { gte: weekAgo } },
-      take: 8,
-      orderBy: { viewsCount: "desc" },
-      include: { user: { select: { username: true, displayName: true } } },
-    });
-  } catch {
-    return [];
-  }
+      return await prisma.photo.findMany({
+        where: { status: "approved", updatedAt: { gte: weekAgo } },
+        take: 8,
+        orderBy: { viewsCount: "desc" },
+        include: { user: { select: { username: true, displayName: true } } },
+      });
+    } catch {
+      return [];
+    }
+  });
 }
 
 interface HomePageProps {

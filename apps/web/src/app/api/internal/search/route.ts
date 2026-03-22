@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@pixelstock/database";
+import { cached, CacheTTL } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -14,171 +15,165 @@ export async function GET(request: NextRequest) {
   const size = searchParams.get("size") || "";
   const color = searchParams.get("color") || "";
   const sort = searchParams.get("sort") || "relevant";
-  const skip = (page - 1) * perPage;
 
-  // Always get counts for all tabs
-  const photoCountWhere = buildPhotoWhere(q, orientation, size, color);
-  const videoCountWhere = buildVideoWhere(q, orientation);
+  // Build a stable cache key from all parameters
+  const cacheKey = `search:${tab}:${q}:${sort}:${orientation}:${size}:${color}:p${page}:n${perPage}`;
 
-  const [photoCount, videoCount, userCount] = await Promise.all([
-    prisma.photo.count({ where: photoCountWhere }),
-    prisma.video.count({ where: videoCountWhere }),
-    q
-      ? prisma.user.count({
-          where: {
-            isBanned: false,
-            OR: [
-              { username: { contains: q, mode: "insensitive" } },
-              { displayName: { contains: q, mode: "insensitive" } },
-            ],
-          },
-        })
-      : Promise.resolve(0),
-  ]);
+  const result = await cached(cacheKey, CacheTTL.FEED, async () => {
+    const skip = (page - 1) * perPage;
 
-  const counts = { photos: photoCount, videos: videoCount, users: userCount };
+    // Always get counts for all tabs
+    const photoCountWhere = buildPhotoWhere(q, orientation, size, color);
+    const videoCountWhere = buildVideoWhere(q, orientation);
 
-  if (tab === "photos") {
-    const orderBy = getPhotoOrderBy(sort);
-    const photos = await prisma.photo.findMany({
-      where: photoCountWhere,
-      include: {
-        user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
-        tags: { include: { tag: true } },
-      },
-      orderBy,
-      take: perPage,
-      skip,
-    });
-
-    const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
-    const formatted = photos.map((p) => ({
-      id: p.id,
-      slug: p.slug,
-      alt: p.altText,
-      width: p.width,
-      height: p.height,
-      photographer: p.user?.displayName || p.user?.username || "Unknown",
-      photographer_url: p.user ? `/profile/${p.user.username}` : "",
-      photographer_id: p.userId,
-      avg_color: p.dominantColor || "#cccccc",
-      blur_hash: p.blurHash,
-      src: {
-        original: p.originalUrl,
-        large2x: p.cdnKey ? `${cdnBase}/photos/${p.id}/large2x.jpg` : p.originalUrl,
-        large: p.cdnKey ? `${cdnBase}/photos/${p.id}/large.jpg` : p.originalUrl,
-        medium: p.cdnKey ? `${cdnBase}/photos/${p.id}/medium.jpg` : p.originalUrl,
-        small: p.cdnKey ? `${cdnBase}/photos/${p.id}/small.jpg` : p.originalUrl,
-        portrait: p.cdnKey ? `${cdnBase}/photos/${p.id}/portrait.jpg` : p.originalUrl,
-        landscape: p.cdnKey ? `${cdnBase}/photos/${p.id}/landscape.jpg` : p.originalUrl,
-        tiny: p.cdnKey ? `${cdnBase}/photos/${p.id}/tiny.jpg` : p.originalUrl,
-      },
-      tags: p.tags.map((pt) => pt.tag.name),
-      liked: false,
-      created_at: p.createdAt.toISOString(),
-    }));
-
-    return NextResponse.json({
-      results: formatted,
-      total_results: photoCount,
-      page,
-      per_page: perPage,
-      counts,
-    });
-  }
-
-  if (tab === "videos") {
-    const orderBy = getVideoOrderBy(sort);
-    const videos = await prisma.video.findMany({
-      where: videoCountWhere,
-      include: {
-        user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
-        tags: { include: { tag: true } },
-        files: true,
-      },
-      orderBy,
-      take: perPage,
-      skip,
-    });
-
-    const formatted = videos.map((v) => ({
-      id: v.id,
-      slug: v.slug,
-      alt: v.altText,
-      width: v.width,
-      height: v.height,
-      duration: v.durationSeconds,
-      thumbnail: v.thumbnailUrl || `https://placehold.co/640x360/1a1a1a/fff?text=Video`,
-      photographer: v.user?.displayName || v.user?.username || "Unknown",
-      photographer_url: v.user ? `/profile/${v.user.username}` : "",
-      photographer_id: v.userId,
-      tags: v.tags.map((vt) => vt.tag.name),
-      files: v.files.map((f) => ({
-        quality: f.quality,
-        width: f.width,
-        height: f.height,
-        url: f.cdnUrl,
-      })),
-      created_at: v.createdAt.toISOString(),
-    }));
-
-    return NextResponse.json({
-      results: formatted,
-      total_results: videoCount,
-      page,
-      per_page: perPage,
-      counts,
-    });
-  }
-
-  if (tab === "users") {
-    const users = await prisma.user.findMany({
-      where: {
-        isBanned: false,
-        ...(q
-          ? {
+    const [photoCount, videoCount, userCount] = await Promise.all([
+      prisma.photo.count({ where: photoCountWhere }),
+      prisma.video.count({ where: videoCountWhere }),
+      q
+        ? prisma.user.count({
+            where: {
+              isBanned: false,
               OR: [
                 { username: { contains: q, mode: "insensitive" } },
                 { displayName: { contains: q, mode: "insensitive" } },
               ],
-            }
-          : {}),
-      },
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        bio: true,
-        followersCount: true,
-        _count: { select: { photos: true, videos: true } },
-      },
-      orderBy: { followersCount: "desc" },
-      take: perPage,
-      skip,
-    });
+            },
+          })
+        : 0,
+    ]);
 
-    const formatted = users.map((u) => ({
-      id: u.id,
-      username: u.username,
-      displayName: u.displayName || u.username,
-      avatarUrl: u.avatarUrl,
-      bio: u.bio,
-      followersCount: u.followersCount,
-      photosCount: u._count.photos,
-      videosCount: u._count.videos,
-    }));
+    const counts = { photos: photoCount, videos: videoCount, users: userCount };
 
-    return NextResponse.json({
-      results: formatted,
-      total_results: userCount,
-      page,
-      per_page: perPage,
-      counts,
-    });
+    if (tab === "photos") {
+      const orderBy = getPhotoOrderBy(sort);
+      const photos = await prisma.photo.findMany({
+        where: photoCountWhere,
+        include: {
+          user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+          tags: { include: { tag: true } },
+        },
+        orderBy,
+        take: perPage,
+        skip,
+      });
+
+      const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
+      const formatted = photos.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        alt: p.altText,
+        width: p.width,
+        height: p.height,
+        photographer: p.user?.displayName || p.user?.username || "Unknown",
+        photographer_url: p.user ? `/profile/${p.user.username}` : "",
+        photographer_id: p.userId,
+        avg_color: p.dominantColor || "#cccccc",
+        blur_hash: p.blurHash,
+        src: {
+          original: p.originalUrl,
+          large2x: p.cdnKey ? `${cdnBase}/photos/${p.id}/large2x.jpg` : p.originalUrl,
+          large: p.cdnKey ? `${cdnBase}/photos/${p.id}/large.jpg` : p.originalUrl,
+          medium: p.cdnKey ? `${cdnBase}/photos/${p.id}/medium.jpg` : p.originalUrl,
+          small: p.cdnKey ? `${cdnBase}/photos/${p.id}/small.jpg` : p.originalUrl,
+          portrait: p.cdnKey ? `${cdnBase}/photos/${p.id}/portrait.jpg` : p.originalUrl,
+          landscape: p.cdnKey ? `${cdnBase}/photos/${p.id}/landscape.jpg` : p.originalUrl,
+          tiny: p.cdnKey ? `${cdnBase}/photos/${p.id}/tiny.jpg` : p.originalUrl,
+        },
+        tags: p.tags.map((pt) => pt.tag.name),
+        liked: false,
+        created_at: p.createdAt.toISOString(),
+      }));
+
+      return { results: formatted, total_results: photoCount, page, per_page: perPage, counts };
+    }
+
+    if (tab === "videos") {
+      const orderBy = getVideoOrderBy(sort);
+      const videos = await prisma.video.findMany({
+        where: videoCountWhere,
+        include: {
+          user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+          tags: { include: { tag: true } },
+          files: true,
+        },
+        orderBy,
+        take: perPage,
+        skip,
+      });
+
+      const formatted = videos.map((v) => ({
+        id: v.id,
+        slug: v.slug,
+        alt: v.altText,
+        width: v.width,
+        height: v.height,
+        duration: v.durationSeconds,
+        thumbnail: v.thumbnailUrl || `https://placehold.co/640x360/1a1a1a/fff?text=Video`,
+        photographer: v.user?.displayName || v.user?.username || "Unknown",
+        photographer_url: v.user ? `/profile/${v.user.username}` : "",
+        photographer_id: v.userId,
+        tags: v.tags.map((vt) => vt.tag.name),
+        files: v.files.map((f) => ({
+          quality: f.quality,
+          width: f.width,
+          height: f.height,
+          url: f.cdnUrl,
+        })),
+        created_at: v.createdAt.toISOString(),
+      }));
+
+      return { results: formatted, total_results: videoCount, page, per_page: perPage, counts };
+    }
+
+    if (tab === "users") {
+      const users = await prisma.user.findMany({
+        where: {
+          isBanned: false,
+          ...(q
+            ? {
+                OR: [
+                  { username: { contains: q, mode: "insensitive" } },
+                  { displayName: { contains: q, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          bio: true,
+          followersCount: true,
+          _count: { select: { photos: true, videos: true } },
+        },
+        orderBy: { followersCount: "desc" },
+        take: perPage,
+        skip,
+      });
+
+      const formatted = users.map((u) => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName || u.username,
+        avatarUrl: u.avatarUrl,
+        bio: u.bio,
+        followersCount: u.followersCount,
+        photosCount: u._count.photos,
+        videosCount: u._count.videos,
+      }));
+
+      return { results: formatted, total_results: userCount, page, per_page: perPage, counts };
+    }
+
+    return null;
+  });
+
+  if (!result) {
+    return NextResponse.json({ error: "Invalid tab" }, { status: 400 });
   }
 
-  return NextResponse.json({ error: "Invalid tab" }, { status: 400 });
+  return NextResponse.json(result);
 }
 
 function buildPhotoWhere(q: string, orientation: string, size: string, color: string) {
