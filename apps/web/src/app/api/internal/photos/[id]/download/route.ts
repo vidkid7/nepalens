@@ -125,18 +125,8 @@ export async function POST(
     data: { downloadsCount: { increment: 1 } },
   }).catch(() => {});
 
-  // Build download URL — use actual stored file since we don't have a resize pipeline
-  const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
-  let downloadUrl: string;
-
-  if (photo.cdnKey) {
-    // Uploaded photo — cdnKey is the actual S3 key (e.g., "uploads/original/{userId}/{uuid}.jpg")
-    downloadUrl = `${cdnBase}/${photo.cdnKey}`;
-  } else if (photo.originalUrl) {
-    downloadUrl = photo.originalUrl;
-  } else {
-    return NextResponse.json({ error: "No file available for download" }, { status: 404 });
-  }
+  // Build download URL — point to the file endpoint which resizes on-the-fly
+  const downloadUrl = `/api/internal/photos/${id}/file?size=${encodeURIComponent(sizeVariant)}`;
 
   // Return remaining downloads info for free users downloading premium
   const response: Record<string, unknown> = { url: downloadUrl };
