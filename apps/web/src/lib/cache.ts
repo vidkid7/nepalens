@@ -108,7 +108,9 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
 }
 
 export async function cacheSet(key: string, data: unknown, ttlSeconds: number = 300): Promise<void> {
-  const serialized = JSON.stringify(data);
+  const serialized = JSON.stringify(data, (_key, value) =>
+    typeof value === "bigint" ? Number(value) : value
+  );
 
   const client = getRedis();
   if (client) {
