@@ -13,8 +13,8 @@ async function getPhoto(slug: string) {
   const photoId = parts[parts.length - 1];
 
   try {
-    const photo = await prisma.photo.findUnique({
-      where: { id: photoId },
+    const photo = await prisma.photo.findFirst({
+      where: { id: photoId, status: "approved" },
       include: {
         user: {
           select: {
@@ -80,9 +80,10 @@ export default async function PhotoDetailPage({ params }: PhotoPageProps) {
         title: photo.altText || photo.description || fallbackTitle || "Untitled",
         src: photo.cdnKey
           ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
-          : `https://placehold.co/1200x800/264653/ffffff?text=${encodeURIComponent(fallbackTitle || "Photo")}`,
+          : photo.originalUrl || `https://placehold.co/1200x800/264653/ffffff?text=${encodeURIComponent(fallbackTitle || "Photo")}`,
         width: photo.width,
         height: photo.height,
+        isPremium: photo.isPremium,
         photographer: {
           username: photo.user.username,
           displayName: photo.user.displayName || photo.user.username,
@@ -107,6 +108,7 @@ export default async function PhotoDetailPage({ params }: PhotoPageProps) {
         src: `https://placehold.co/1200x800/264653/ffffff?text=${encodeURIComponent(fallbackTitle || "Photo")}`,
         width: 1200,
         height: 800,
+        isPremium: false,
         photographer: { username: "photographer", displayName: "Photographer", avatarUrl: null, bio: null, followersCount: 0 },
         tags: ["nature", "landscape", "scenery", "outdoor"],
         likes: 0, downloads: 0, views: 0,

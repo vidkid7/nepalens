@@ -13,10 +13,17 @@ function getRedis(): Redis | null {
 
   try {
     const url = process.env.REDIS_URL || "redis://localhost:6379";
-    redis = new Redis(url, {
+    // Parse URL with WHATWG URL API to avoid url.parse() deprecation warning
+    const parsed = new URL(url);
+    redis = new Redis({
+      host: parsed.hostname || "localhost",
+      port: parseInt(parsed.port || "6379", 10),
+      password: parsed.password || undefined,
+      username: parsed.username || undefined,
+      db: parsed.pathname ? parseInt(parsed.pathname.slice(1), 10) || 0 : 0,
       maxRetriesPerRequest: 1,
       retryStrategy(times) {
-        if (times > 3) return null; // Stop retrying after 3 attempts
+        if (times > 3) return null;
         return Math.min(times * 200, 2000);
       },
       connectTimeout: 3000,

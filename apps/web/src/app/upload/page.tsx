@@ -34,6 +34,9 @@ interface UploadFile {
   category: string;
   location: string;
   challengeId: string;
+  isPremium: boolean;
+  width: number;
+  height: number;
   error?: string;
   validationError?: string;
 }
@@ -90,7 +93,6 @@ export default function UploadPage() {
   }
 
   const addFiles = (newFiles: FileList | File[]) => {
-    const entries: UploadFile[] = [];
     let skipped = 0;
 
     Array.from(newFiles).forEach((file) => {
@@ -100,24 +102,43 @@ export default function UploadPage() {
         toast(validationError, "error");
         return;
       }
-      entries.push({
-        file,
-        preview: URL.createObjectURL(file),
-        progress: 0,
-        status: "pending",
-        title: file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
-        description: "",
-        altText: file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
-        tags: "",
-        category: "None",
-        location: "",
-        challengeId: "",
-      });
+      const preview = URL.createObjectURL(file);
+
+      // Extract image dimensions
+      const img = new Image();
+      img.onload = () => {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.preview === preview ? { ...f, width: img.naturalWidth, height: img.naturalHeight } : f
+          )
+        );
+      };
+      img.src = preview;
+
+      setFiles((prev) => [
+        ...prev,
+        {
+          file,
+          preview,
+          progress: 0,
+          status: "pending" as const,
+          title: file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
+          description: "",
+          altText: file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
+          tags: "",
+          category: "None",
+          location: "",
+          challengeId: "",
+          isPremium: false,
+          width: 0,
+          height: 0,
+        },
+      ]);
     });
 
-    if (entries.length > 0) {
-      setFiles((prev) => [...prev, ...entries]);
-      toast(`${entries.length} photo${entries.length > 1 ? "s" : ""} added to queue`, "success");
+    const added = Array.from(newFiles).length - skipped;
+    if (added > 0) {
+      toast(`${added} photo${added > 1 ? "s" : ""} added to queue`, "success");
     }
   };
 
@@ -147,6 +168,22 @@ export default function UploadPage() {
   };
 
   const uploadAll = async () => {
+    // Validate required fields before starting
+    let hasValidationErrors = false;
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].status !== "pending") continue;
+      if (!files[i].title.trim()) {
+        updateFile(i, { validationError: "Title is required" });
+        hasValidationErrors = true;
+      } else {
+        updateFile(i, { validationError: undefined });
+      }
+    }
+    if (hasValidationErrors) {
+      toast("Please fill in all required fields (Title) before uploading", "error");
+      return;
+    }
+
     const pending = files.filter((f) => f.status === "pending");
     if (pending.length === 0) return;
 
@@ -181,7 +218,7 @@ export default function UploadPage() {
         });
         updateFile(i, { progress: 70, status: "processing" });
 
-        // Step 3: Create photo record
+        // Step 3: Create photo record (include dimensions)
         const createRes = await fetch("/api/internal/photos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -193,6 +230,9 @@ export default function UploadPage() {
             category: files[i].category === "None" ? undefined : files[i].category,
             location: files[i].location || undefined,
             challengeId: files[i].challengeId || undefined,
+            isPremium: files[i].isPremium,
+            width: files[i].width,
+            height: files[i].height,
             tags: files[i].tags
               .split(",")
               .map((t) => t.trim())
@@ -200,7 +240,10 @@ export default function UploadPage() {
           }),
         });
 
-        if (!createRes.ok) throw new Error("Failed to create photo record");
+        if (!createRes.ok) {
+          const errBody = await createRes.json().catch(() => ({}));
+          throw new Error(errBody.error || `Failed to create photo record (${createRes.status})`);
+        }
         updateFile(i, { progress: 100, status: "done" });
         successCount++;
       } catch (err: any) {
@@ -377,14 +420,18 @@ export default function UploadPage() {
                       {f.status === "pending" ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="form-label">Title</label>
+                            <label className="form-label">Title <span className="text-danger-500">*</span></label>
                             <input
                               type="text"
                               value={f.title}
-                              onChange={(e) => updateFile(i, { title: e.target.value })}
+                              onChange={(e) => updateFile(i, { title: e.target.value, validationError: e.target.value.trim() ? undefined : "Title is required" })}
                               placeholder="Give your photo a title"
-                              className="input"
+                              className={`input ${f.validationError ? "border-danger-500 ring-1 ring-danger-500" : ""}`}
+                              required
                             />
+                            {f.validationError && (
+                              <p className="text-micro text-danger-500 mt-1">{f.validationError}</p>
+                            )}
                           </div>
                           <div>
                             <label className="form-label">Category</label>
@@ -461,6 +508,27 @@ export default function UploadPage() {
                                 ))}
                               </div>
                             )}
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="form-label flex items-center gap-3 cursor-pointer">
+                              <span className="relative inline-flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={f.isPremium}
+                                  onChange={(e) => updateFile(i, { isPremium: e.target.checked })}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-10 h-5 bg-surface-200 rounded-full peer peer-checked:bg-amber-500 transition-colors" />
+                                <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+                              </span>
+                              <span className="flex items-center gap-2">
+                                Mark as Premium
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
+                                  ⭐ Pro
+                                </span>
+                              </span>
+                            </label>
+                            <p className="form-hint mt-1">Premium photos require a Pro subscription or use free-tier quota to download</p>
                           </div>
                         </div>
                       ) : (

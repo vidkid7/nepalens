@@ -16,6 +16,7 @@ interface Photo {
   photographer_url: string;
   avg_color: string | null;
   blur_hash?: string | null;
+  isPremium?: boolean;
 }
 
 interface HomeFeedProps {

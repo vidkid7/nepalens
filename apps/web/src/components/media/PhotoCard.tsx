@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { useSubscription } from "@/hooks/useSubscription";
 import BlurHashImage from "@/components/ui/BlurHashImage";
 import SaveToCollectionModal from "@/components/collections/SaveToCollectionModal";
+import WatermarkOverlay from "@/components/ui/WatermarkOverlay";
+import { triggerFileDownload } from "@/lib/download";
 
 interface PhotoCardProps {
   photo: {
@@ -19,6 +23,7 @@ interface PhotoCardProps {
     photographer_url: string;
     avg_color: string | null;
     blur_hash?: string | null;
+    isPremium?: boolean;
   };
 }
 
@@ -28,6 +33,8 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
   const { data: session } = useSession();
   const { toast } = useToast();
+  const { isPro } = useSubscription();
+  const router = useRouter();
 
   const handleLike = useCallback(
     async (e: React.MouseEvent) => {
@@ -53,6 +60,11 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
     async (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      // Premium images need Pro or free-tier quota; free images always downloadable
+      if (photo.isPremium && !isPro && !session) {
+        window.location.href = "/login";
+        return;
+      }
       setDownloading(true);
       try {
         const res = await fetch(`/api/internal/photos/${photo.id}/download`, {
@@ -60,24 +72,36 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ size: "original" }),
         });
-        const data = await res.json();
-        if (data.url) {
-          const a = document.createElement("a");
-          a.href = data.url;
-          a.download = `pixelstock-${photo.slug}.jpg`;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          toast("Download started", "success");
+        const data = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
+        if (!res.ok && !data.requiresLogin && !data.quotaExceeded) {
+          toast(data.error || data.message || "Download failed", "error");
+          setDownloading(false);
+          return;
         }
-      } catch {
-        toast("Download failed", "error");
+        if (data.requiresLogin) {
+          window.location.href = "/login?callbackUrl=" + encodeURIComponent(window.location.pathname);
+          setDownloading(false);
+          return;
+        }
+        if (data.quotaExceeded) {
+          toast(data.message || "Download limit reached. Upgrade to Pro.", "error");
+          setDownloading(false);
+          return;
+        }
+        if (data.url) {
+          await triggerFileDownload(data.url, `pixelstock-${photo.slug}.jpg`);
+          toast(data.remainingDownloads !== undefined
+            ? `Downloaded (${data.remainingDownloads} premium left)`
+            : "Download started", "success");
+        } else {
+          toast(data.error || "Download link unavailable", "error");
+        }
+      } catch (err: any) {
+        toast(err.message || "Download failed", "error");
       }
       setDownloading(false);
     },
-    [photo.id, photo.slug, toast]
+    [photo.id, photo.slug, photo.isPremium, toast, isPro, router, session]
   );
 
   const handleBookmark = useCallback(
@@ -93,8 +117,13 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
     [session]
   );
 
+  const showWatermark = !!photo.isPremium && !isPro;
+
   return (
-    <div className="relative rounded-xl overflow-hidden cursor-pointer group">
+    <div
+      className="relative rounded-xl overflow-hidden cursor-pointer group"
+      onContextMenu={showWatermark ? (e) => e.preventDefault() : undefined}
+    >
       <Link href={`/photo/${photo.slug}-${photo.id}`} className="block">
         <BlurHashImage
           src={photo.src.large}
@@ -107,11 +136,23 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
         />
       </Link>
 
+      {/* Premium badge */}
+      {photo.isPremium && (
+        <div className="absolute top-3 left-3 z-30">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">
+            ⭐ Pro
+          </span>
+        </div>
+      )}
+
+      {/* Watermark overlay for premium images + non-Pro users */}
+      {showWatermark && <WatermarkOverlay />}
+
       {/* Gradient overlay — always subtle, stronger on hover */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20" />
 
       {/* Top-right actions — visible on hover */}
-      <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+      <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-30">
         <button
           onClick={handleBookmark}
           className="p-2 bg-white/90 backdrop-blur-sm rounded-lg text-surface-700 hover:bg-white hover:text-surface-900 transition-all shadow-sm"
@@ -139,7 +180,7 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
       </div>
 
       {/* Bottom bar — photographer + download */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-end opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+      <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-end opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-30">
         <Link
           href={photo.photographer_url}
           className="text-caption font-medium text-white hover:underline z-10 truncate max-w-[60%]"
@@ -151,7 +192,7 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
           onClick={handleDownload}
           disabled={downloading}
           className="btn btn-xs btn-white shadow-sm disabled:opacity-50"
-          title="Free download"
+          title="Download"
           aria-label="Download"
         >
           {downloading ? (

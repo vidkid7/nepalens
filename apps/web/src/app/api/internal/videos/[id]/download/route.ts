@@ -41,7 +41,10 @@ export async function POST(
   });
 
   const file = video.files.find((f) => f.quality === quality) || video.files[0];
-  const downloadUrl = file?.cdnUrl || "";
+  if (!file) {
+    return NextResponse.json({ error: "No video file available" }, { status: 404 });
+  }
+  const downloadUrl = file.cdnUrl || "";
 
-  return NextResponse.json({ url: downloadUrl, quality: file?.quality });
+  return NextResponse.json({ url: downloadUrl, quality: file.quality });
 }

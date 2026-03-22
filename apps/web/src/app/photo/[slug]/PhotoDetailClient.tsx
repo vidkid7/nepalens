@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useState, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { useSubscription } from "@/hooks/useSubscription";
 import Avatar from "@/components/ui/Avatar";
 import MasonryGrid from "@/components/media/MasonryGrid";
 import DownloadModal from "@/components/media/DownloadModal";
+import WatermarkOverlay from "@/components/ui/WatermarkOverlay";
+import { triggerFileDownload } from "@/lib/download";
 
 interface PhotoData {
   id: string;
@@ -14,6 +18,7 @@ interface PhotoData {
   src: string;
   width: number;
   height: number;
+  isPremium: boolean;
   photographer: {
     username: string;
     displayName: string;
@@ -42,6 +47,8 @@ export default function PhotoDetailClient({
 }) {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const { isPro } = useSubscription();
+  const router = useRouter();
   const [liked, setLiked] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [following, setFollowing] = useState(false);
@@ -63,6 +70,11 @@ export default function PhotoDetailClient({
   }, [session, photo.id, toast]);
 
   const handleDownload = useCallback(async () => {
+    // Premium images require Pro or quota; free images are always downloadable
+    if (photo.isPremium && !isPro && !session) {
+      router.push("/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+      return;
+    }
     setDownloading(true);
     try {
       const res = await fetch(`/api/internal/photos/${photo.id}/download`, {
@@ -70,20 +82,33 @@ export default function PhotoDetailClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ size: "original" }),
       });
-      const data = await res.json();
-      if (data.url) {
-        const a = document.createElement("a");
-        a.href = data.url;
-        a.download = `pixelstock-${photo.id}.jpg`;
-        a.target = "_blank";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        toast("Download started", "success");
+      const data = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
+      if (!res.ok && !data.requiresLogin && !data.quotaExceeded) {
+        toast(data.error || data.message || "Download failed", "error");
+        setDownloading(false);
+        return;
       }
-    } catch { toast("Download failed", "error"); }
+      if (data.requiresLogin) {
+        router.push("/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+        setDownloading(false);
+        return;
+      }
+      if (data.quotaExceeded) {
+        toast(data.message || "Monthly download limit reached. Upgrade to Pro for unlimited.", "error");
+        setDownloading(false);
+        return;
+      }
+      if (data.url) {
+        await triggerFileDownload(data.url, `pixelstock-${photo.id}.jpg`);
+        toast(data.remainingDownloads !== undefined
+          ? `Download started (${data.remainingDownloads} premium downloads left this month)`
+          : "Download started", "success");
+      } else {
+        toast(data.error || "Download link unavailable", "error");
+      }
+    } catch (err: any) { toast(err.message || "Download failed", "error"); }
     setDownloading(false);
-  }, [photo.id, toast]);
+  }, [photo.id, photo.isPremium, toast, isPro, router, session]);
 
   const handleFollow = useCallback(async () => {
     if (!session) { window.location.href = "/login"; return; }
@@ -113,23 +138,41 @@ export default function PhotoDetailClient({
     src: {
       large: p.cdnKey
         ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${p.cdnKey}`
-        : `https://placehold.co/600x400/264653/fff?text=Photo`,
+        : p.originalUrl || `https://placehold.co/600x400/264653/fff?text=Photo`,
     },
     photographer: p.user?.displayName || "Photographer",
     photographer_url: `/profile/${p.user?.username || "user"}`,
     avg_color: p.dominantColor || "#264653",
+    isPremium: p.isPremium || false,
   }));
+
+  const showWatermark = photo.isPremium && !isPro;
 
   return (
     <div className="pb-16">
+      {/* Premium badge */}
+      {photo.isPremium && (
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-1.5 text-sm font-medium">
+          ⭐ Premium Photo {!isPro && "— Upgrade to Pro for watermark-free downloads"}
+        </div>
+      )}
+
       {/* Hero image */}
-      <div className="bg-surface-950 flex items-center justify-center min-h-[50vh] max-h-[85vh]">
+      <div
+        className="bg-surface-950 flex items-center justify-center min-h-[50vh] max-h-[85vh] relative"
+        onContextMenu={showWatermark ? (e) => e.preventDefault() : undefined}
+      >
         <img
           src={photo.src}
           alt={photo.title}
           className="max-w-full max-h-[85vh] object-contain"
-          style={{ backgroundColor: photo.dominantColor || "#1a1a1a" }}
+          style={{
+            backgroundColor: photo.dominantColor || "#1a1a1a",
+          }}
+          draggable={showWatermark ? false : undefined}
+          onDragStart={showWatermark ? (e: React.DragEvent) => e.preventDefault() : undefined}
         />
+        {showWatermark && <WatermarkOverlay />}
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -185,7 +228,11 @@ export default function PhotoDetailClient({
             <button
               onClick={handleDownload}
               disabled={downloading}
-              className="btn btn-md btn-primary"
+              className={`btn btn-md ${
+                !photo.isPremium || isPro
+                  ? "btn-primary"
+                  : "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 rounded-lg px-4 py-2 font-semibold text-sm"
+              }`}
             >
               {downloading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -194,7 +241,7 @@ export default function PhotoDetailClient({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
               )}
-              Free Download
+              {!photo.isPremium ? "Free Download" : isPro ? "Pro Download" : "Download"}
             </button>
             <button
               onClick={() => setShowDownloadModal(true)}
@@ -324,6 +371,7 @@ export default function PhotoDetailClient({
           width: photo.width,
           height: photo.height,
           src: photo.src,
+          isPremium: photo.isPremium,
         }}
       />
     </div>

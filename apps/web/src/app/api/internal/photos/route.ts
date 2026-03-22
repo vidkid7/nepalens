@@ -128,7 +128,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id;
+  const rawUserId = (session.user as any).id;
+
+  // Validate user exists in DB to prevent FK constraint violations (stale JWT)
+  const user = await prisma.user.findUnique({
+    where: { id: rawUserId },
+    select: { id: true },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "User not found. Please sign out and sign in again." }, { status: 401 });
+  }
+  const userId = user.id;
 
   let body: any;
   try {
@@ -137,12 +147,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { s3Key, title, description, altText, category, tags, location, challengeId } = body;
+  const { s3Key, title, description, altText, category, tags, location, challengeId, isPremium, width, height } = body;
 
   if (!s3Key || !title) {
     return NextResponse.json({ error: "s3Key and title are required" }, { status: 400 });
   }
 
+  try {
   const slug = title
     .toLowerCase()
     .trim()
@@ -153,6 +164,12 @@ export async function POST(request: NextRequest) {
   const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
   const originalUrl = `${cdnBase}/${s3Key}`;
 
+  // Determine orientation from dimensions
+  const w = typeof width === "number" && width > 0 ? width : 0;
+  const h = typeof height === "number" && height > 0 ? height : 0;
+  const orientation = w > 0 && h > 0 ? (w > h ? "landscape" : w < h ? "portrait" : "square") : null;
+  const megapixels = w > 0 && h > 0 ? parseFloat(((w * h) / 1_000_000).toFixed(1)) : null;
+
   const photo = await prisma.photo.create({
     data: {
       userId,
@@ -162,9 +179,13 @@ export async function POST(request: NextRequest) {
       originalUrl,
       cdnKey: s3Key,
       locationName: location || null,
-      width: 0,
-      height: 0,
-      status: "pending",
+      width: w,
+      height: h,
+      orientation,
+      megapixels,
+      status: "approved",
+      isPremium: isPremium === true,
+      approvedAt: new Date(),
     },
     include: {
       user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
@@ -233,7 +254,21 @@ export async function POST(request: NextRequest) {
     cacheDel(CacheKeys.photoFeed("popular", 1, 30)),
   ]).catch(() => {});
 
-  return NextResponse.json({ photo: result }, { status: 201 });
+  // Serialize safely — Prisma BigInt fields (fileSizeBytes, viewsCount, etc.) crash JSON.stringify
+  const safeResult = JSON.parse(
+    JSON.stringify(result, (_key, value) =>
+      typeof value === "bigint" ? Number(value) : value
+    )
+  );
+
+  return NextResponse.json({ photo: safeResult }, { status: 201 });
+  } catch (err: any) {
+    console.error("Photo create error:", err);
+    return NextResponse.json(
+      { error: err.message || "Failed to create photo" },
+      { status: 500 }
+    );
+  }
 }
 
 // Fetch photos for a specific user (not cached — user-specific)
@@ -301,6 +336,7 @@ function formatPhoto(
     },
     tags: p.tags.map((pt: any) => pt.tag.name),
     liked,
+    isPremium: p.isPremium || false,
     created_at: p.createdAt.toISOString(),
   };
 }

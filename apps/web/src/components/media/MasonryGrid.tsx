@@ -15,6 +15,7 @@ interface MasonryGridProps {
     photographer_url: string;
     avg_color: string | null;
     blur_hash?: string | null;
+    isPremium?: boolean;
   }>;
   columns?: number;
   gap?: number;

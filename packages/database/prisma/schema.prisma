@@ -48,8 +48,62 @@ model User {
   notifications       Notification[]
   moderationDecisions ModerationDecision[] @relation("moderationDecisions")
   roles               UserRole[]
+  subscriptions       Subscription[]
 
   @@map("users")
+}
+
+// =============================================
+// SUBSCRIPTION & PLANS
+// =============================================
+model SubscriptionPlan {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  slug          String   @unique
+  description   String?
+  priceMonthly  Int      // in cents
+  priceQuarter  Int      // in cents (3-month)
+  priceSemiAnnual Int    // in cents (6-month)
+  priceYearly   Int      // in cents (12-month)
+  downloadsPerMonth Int  @default(-1) // -1 = unlimited
+  apiCallsPerMonth  Int  @default(0)
+  prioritySupport   Boolean @default(false)
+  commercialLicense Boolean @default(false)
+  noAttribution     Boolean @default(false)
+  earlyAccess       Boolean @default(false)
+  features      String[] // additional feature labels
+  highlight     Boolean  @default(false)
+  position      Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  userId          String
+  planId          String
+  billingCycle    String   // "monthly" | "quarterly" | "semiannual" | "yearly"
+  status          String   @default("active") // active | canceled | expired | past_due
+  currentPeriodStart DateTime @default(now())
+  currentPeriodEnd   DateTime
+  canceledAt      DateTime?
+  paymentMethod   String?
+  paymentId       String?  // External payment reference
+  amount          Int      // Amount paid in cents
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
 }
 
 // =============================================
@@ -110,6 +164,7 @@ model Photo {
   exifFocalLen    String?
   locationName    String?
   status          String    @default("pending")
+  isPremium       Boolean   @default(false)
   isFeatured      Boolean   @default(false)
   isCurated       Boolean   @default(false)
   featuredAt      DateTime?
@@ -157,6 +212,7 @@ model Video {
   blurHash        String?  @db.VarChar(100)
   orientation     String?  @db.VarChar(10)
   status          String   @default("pending")
+  isPremium       Boolean  @default(false)
   isFeatured      Boolean  @default(false)
   viewsCount      BigInt   @default(0)
   downloadsCount  BigInt   @default(0)

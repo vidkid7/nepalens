@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { href: "/collections", label: "Collections" },
   { href: "/challenges", label: "Challenges" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/license", label: "License" },
 ];
 
