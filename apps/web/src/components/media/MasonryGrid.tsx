@@ -66,8 +66,11 @@ export default function MasonryGrid({ photos, columns = 3, gap = 16 }: MasonryGr
 
     photos.forEach((photo, i) => {
       const shortestCol = heights.indexOf(Math.min(...heights));
+      if (shortestCol < 0 || shortestCol >= columns) return;
       result[shortestCol].push({ photo, globalIndex: i });
-      heights[shortestCol] += photo.height / photo.width;
+      const w = photo.width || 1;
+      const h = photo.height || 1;
+      heights[shortestCol] += h / w;
     });
 
     return result;
