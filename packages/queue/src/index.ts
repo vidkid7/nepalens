@@ -1,20 +1,11 @@
-import { Queue, Worker, type ConnectionOptions } from "bullmq";
-import IORedis from "ioredis";
+import { Queue, Worker } from "bullmq";
 
-let connection: IORedis | null = null;
+// Use URL string for connection to avoid ioredis version mismatch
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
-export function getRedisConnection(): IORedis {
-  if (!connection) {
-    connection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
-      maxRetriesPerRequest: null,
-    });
-  }
-  return connection;
+function getQueueOpts() {
+  return { connection: { url: REDIS_URL } as any };
 }
-
-const getConnectionOpts = (): ConnectionOptions => ({
-  connection: getRedisConnection(),
-});
 
 // Queue names
 export const QUEUE_NAMES = {
@@ -25,12 +16,25 @@ export const QUEUE_NAMES = {
   EMAIL: "email",
 } as const;
 
-// Queue instances
-export const processImageQueue = new Queue(QUEUE_NAMES.PROCESS_IMAGE, getConnectionOpts());
-export const processVideoQueue = new Queue(QUEUE_NAMES.PROCESS_VIDEO, getConnectionOpts());
-export const tagImageQueue = new Queue(QUEUE_NAMES.TAG_IMAGE, getConnectionOpts());
-export const searchIndexQueue = new Queue(QUEUE_NAMES.SEARCH_INDEX, getConnectionOpts());
-export const emailQueue = new Queue(QUEUE_NAMES.EMAIL, getConnectionOpts());
+// Queue instances (lazy-initialized)
+let _processImageQueue: Queue | null = null;
+let _processVideoQueue: Queue | null = null;
+let _tagImageQueue: Queue | null = null;
+let _searchIndexQueue: Queue | null = null;
+let _emailQueue: Queue | null = null;
+
+export function getProcessImageQueue() { return _processImageQueue ??= new Queue(QUEUE_NAMES.PROCESS_IMAGE, getQueueOpts()); }
+export function getProcessVideoQueue() { return _processVideoQueue ??= new Queue(QUEUE_NAMES.PROCESS_VIDEO, getQueueOpts()); }
+export function getTagImageQueue() { return _tagImageQueue ??= new Queue(QUEUE_NAMES.TAG_IMAGE, getQueueOpts()); }
+export function getSearchIndexQueue() { return _searchIndexQueue ??= new Queue(QUEUE_NAMES.SEARCH_INDEX, getQueueOpts()); }
+export function getEmailQueue() { return _emailQueue ??= new Queue(QUEUE_NAMES.EMAIL, getQueueOpts()); }
+
+// Backward-compatible exports (use getXxxQueue() for full type safety)
+export const processImageQueue = { add: (name: string, data: any, opts?: any) => getProcessImageQueue().add(name, data, opts) } as any;
+export const processVideoQueue = { add: (name: string, data: any, opts?: any) => getProcessVideoQueue().add(name, data, opts) } as any;
+export const tagImageQueue = { add: (name: string, data: any, opts?: any) => getTagImageQueue().add(name, data, opts) } as any;
+export const searchIndexQueue = { add: (name: string, data: any, opts?: any) => getSearchIndexQueue().add(name, data, opts) } as any;
+export const emailQueue = { add: (name: string, data: any, opts?: any) => getEmailQueue().add(name, data, opts) } as any;
 
 // Job type definitions
 export interface ProcessImageJob {
@@ -58,13 +62,13 @@ export interface EmailJob {
   data: Record<string, any>;
 }
 
-// Helper to create workers (used in Phase 2)
+// Helper to create workers
 export function createWorker<T>(
   queueName: string,
   processor: (job: { data: T }) => Promise<void>
 ): Worker {
   return new Worker(queueName, processor as any, {
-    ...getConnectionOpts(),
+    connection: { url: REDIS_URL } as any,
     concurrency: 3,
   });
 }

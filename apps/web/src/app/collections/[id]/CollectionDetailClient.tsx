@@ -60,7 +60,7 @@ export default function CollectionDetailClient({ collectionId, isOwner }: Props)
             Delete
           </button>
 
-          <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Delete Collection" size="sm">
+          <Modal open={showDelete} onClose={() => setShowDelete(false)} title="Delete Collection" size="sm">
             <div className="space-y-4">
               <p className="text-body text-surface-600">Are you sure you want to delete this collection? This action cannot be undone. The media inside will not be deleted.</p>
               <div className="flex justify-end gap-2">

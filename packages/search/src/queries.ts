@@ -118,19 +118,19 @@ export function buildVideoSearchQuery(params: SearchFilters) {
   };
 }
 
-export async function searchPhotos(params: SearchFilters) {
+export async function searchPhotos(params: SearchFilters): Promise<any> {
   const client = getElasticsearchClient();
   const query = buildSearchQuery(params);
   return client.search(query);
 }
 
-export async function searchVideos(params: SearchFilters) {
+export async function searchVideos(params: SearchFilters): Promise<any> {
   const client = getElasticsearchClient();
   const query = buildVideoSearchQuery(params);
   return client.search(query);
 }
 
-export async function indexPhoto(doc: Record<string, any>) {
+export async function indexPhoto(doc: Record<string, any>): Promise<any> {
   const client = getElasticsearchClient();
   return client.index({
     index: PHOTO_INDEX,
@@ -139,7 +139,7 @@ export async function indexPhoto(doc: Record<string, any>) {
   });
 }
 
-export async function indexVideo(doc: Record<string, any>) {
+export async function indexVideo(doc: Record<string, any>): Promise<any> {
   const client = getElasticsearchClient();
   return client.index({
     index: VIDEO_INDEX,

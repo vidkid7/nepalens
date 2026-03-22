@@ -31,14 +31,14 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/internal/leaderboard")
+    fetch(`/api/internal/leaderboard?period=${period}`)
       .then((r) => r.json())
       .then((data) => {
         setLeaders(data.leaders || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [period]);
 
   const rankBadge = (i: number) => {
     if (i === 0) return "bg-yellow-400 text-yellow-900";

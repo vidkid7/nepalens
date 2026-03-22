@@ -38,8 +38,8 @@ export default async function CollectionDetailPage({ params }: Props) {
         items: {
           orderBy: { position: "asc" },
           include: {
-            photo: { select: { id: true, slug: true, title: true, altText: true, originalUrl: true, thumbnailUrl: true, dominantColor: true, width: true, height: true } },
-            video: { select: { id: true, slug: true, title: true, thumbnailUrl: true } },
+            photo: { select: { id: true, slug: true, altText: true, originalUrl: true, dominantColor: true, width: true, height: true, cdnKey: true } },
+            video: { select: { id: true, slug: true, altText: true, thumbnailUrl: true, width: true, height: true } },
           },
         },
       },

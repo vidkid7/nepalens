@@ -60,8 +60,8 @@ export async function generateMetadata({ params }: PhotoPageProps): Promise<Meta
   return {
     title: `${title} | Free Stock Photo`,
     description: `Download this free photo. Free for personal and commercial use.`,
-    openGraph: photo?.storageKey ? {
-      images: [{ url: `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.storageKey}`, width: photo.width, height: photo.height }],
+    openGraph: photo?.cdnKey ? {
+      images: [{ url: `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`, width: photo.width, height: photo.height }],
     } : undefined,
   };
 }
@@ -78,8 +78,8 @@ export default async function PhotoDetailPage({ params }: PhotoPageProps) {
     ? {
         id: photo.id,
         title: photo.altText || photo.description || fallbackTitle || "Untitled",
-        src: photo.storageKey
-          ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.storageKey}`
+        src: photo.cdnKey
+          ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
           : `https://placehold.co/1200x800/264653/ffffff?text=${encodeURIComponent(fallbackTitle || "Photo")}`,
         width: photo.width,
         height: photo.height,
@@ -93,13 +93,13 @@ export default async function PhotoDetailPage({ params }: PhotoPageProps) {
         tags: photo.tags.map((pt: any) => pt.tag.name),
         likes: photo._count.likes,
         downloads: photo._count.downloads,
-        views: photo.viewsCount,
-        camera: photo.cameraMake && photo.cameraModel ? `${photo.cameraMake} ${photo.cameraModel}` : null,
-        iso: photo.iso,
-        focalLength: photo.focalLength,
-        aperture: photo.aperture,
-        shutterSpeed: photo.shutterSpeed,
-        dominantColor: photo.dominantColor,
+        views: Number(photo.viewsCount),
+        camera: photo.exifCamera || null,
+        iso: photo.exifIso ?? null,
+        focalLength: photo.exifFocalLen ?? null,
+        aperture: photo.exifAperture ?? null,
+        shutterSpeed: photo.exifShutter ?? null,
+        dominantColor: photo.dominantColor ?? null,
       }
     : {
         id: photoId,

@@ -111,8 +111,8 @@ export default function PhotoDetailClient({
     width: p.width,
     height: p.height,
     src: {
-      large: p.storageKey
-        ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${p.storageKey}`
+      large: p.cdnKey
+        ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${p.cdnKey}`
         : `https://placehold.co/600x400/264653/fff?text=Photo`,
     },
     photographer: p.user?.displayName || "Photographer",

@@ -55,7 +55,7 @@ interface ProfileContentProps {
   initialPhotos: PhotoItem[];
 }
 
-type TabKey = "photos" | "videos" | "collections" | "likes";
+type TabKey = "photos" | "videos" | "collections" | "likes" | "downloads" | "following";
 
 export default function ProfileContent({
   user,
@@ -90,6 +90,16 @@ export default function ProfileContent({
   const [likes, setLikes] = useState<PhotoItem[]>([]);
   const [likesLoaded, setLikesLoaded] = useState(false);
   const [likesLoading, setLikesLoading] = useState(false);
+
+  // Downloads tab state
+  const [downloads, setDownloads] = useState<PhotoItem[]>([]);
+  const [downloadsLoaded, setDownloadsLoaded] = useState(false);
+  const [downloadsLoading, setDownloadsLoading] = useState(false);
+
+  // Following tab state
+  const [followingUsers, setFollowingUsers] = useState<Array<{ id: string; username: string; displayName: string | null; avatarUrl: string | null; photosCount: number }>>([]);
+  const [followingLoaded, setFollowingLoaded] = useState(false);
+  const [followingLoading, setFollowingLoading] = useState(false);
 
   const isOwnProfile = (session?.user as any)?.username === user.username;
   const display = user.displayName || user.username;
@@ -191,6 +201,34 @@ export default function ProfileContent({
       .finally(() => setLikesLoading(false));
   }, [activeTab, likesLoaded, isOwnProfile]);
 
+  // Fetch downloads on tab switch (own profile only)
+  useEffect(() => {
+    if (activeTab !== "downloads" || downloadsLoaded || !isOwnProfile) return;
+    setDownloadsLoading(true);
+    fetch(`/api/internal/downloads?per_page=30`)
+      .then((r) => (r.ok ? r.json() : { photos: [] }))
+      .then((data) => {
+        setDownloads(data.photos || []);
+        setDownloadsLoaded(true);
+      })
+      .catch(() => setDownloadsLoaded(true))
+      .finally(() => setDownloadsLoading(false));
+  }, [activeTab, downloadsLoaded, isOwnProfile]);
+
+  // Fetch following on tab switch
+  useEffect(() => {
+    if (activeTab !== "following" || followingLoaded) return;
+    setFollowingLoading(true);
+    fetch(`/api/internal/users/${user.username}/following`)
+      .then((r) => (r.ok ? r.json() : { users: [] }))
+      .then((data) => {
+        setFollowingUsers(data.users || []);
+        setFollowingLoaded(true);
+      })
+      .catch(() => setFollowingLoaded(true))
+      .finally(() => setFollowingLoading(false));
+  }, [activeTab, followingLoaded, user.username]);
+
   const statItems = [
     { label: "Photos", value: stats.photos },
     { label: "Videos", value: stats.videos },
@@ -205,6 +243,8 @@ export default function ProfileContent({
     { key: "videos", label: "Videos", count: stats.videos },
     { key: "collections", label: "Collections", count: stats.collections },
     ...(isOwnProfile ? [{ key: "likes" as TabKey, label: "Likes" }] : []),
+    ...(isOwnProfile ? [{ key: "downloads" as TabKey, label: "Downloads" }] : []),
+    { key: "following", label: "Following", count: stats.following },
   ];
 
   return (
@@ -501,6 +541,59 @@ export default function ProfileContent({
               <EmptyState
                 title="No likes yet"
                 description="Photos you like will appear here."
+              />
+            ))}
+
+          {/* Downloads Tab (own profile only) */}
+          {activeTab === "downloads" &&
+            isOwnProfile &&
+            (downloadsLoading ? (
+              <MasonryGridSkeleton columns={3} />
+            ) : downloads.length > 0 ? (
+              <MasonryGrid photos={downloads} columns={3} />
+            ) : (
+              <EmptyState
+                title="No downloads yet"
+                description="Photos you download will appear here."
+              />
+            ))}
+
+          {/* Following Tab */}
+          {activeTab === "following" &&
+            (followingLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="aspect-[4/3] rounded-xl bg-surface-100 animate-pulse" />
+                ))}
+              </div>
+            ) : followingUsers.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {followingUsers.map((u) => (
+                  <Link
+                    key={u.id}
+                    href={`/profile/${u.username}`}
+                    className="card p-5 flex items-center gap-4 hover:shadow-card-hover transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-surface-100 flex-shrink-0">
+                      {u.avatarUrl ? (
+                        <img src={u.avatarUrl} alt={u.displayName || u.username} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-brand flex items-center justify-center text-white font-bold">
+                          {(u.displayName || u.username).charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-subtitle font-medium text-surface-900 truncate">{u.displayName || u.username}</p>
+                      <p className="text-micro text-surface-400">@{u.username} · {u.photosCount} photos</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="Not following anyone"
+                description={isOwnProfile ? "Follow creators to see them here." : `${display} isn't following anyone yet.`}
               />
             ))}
         </div>

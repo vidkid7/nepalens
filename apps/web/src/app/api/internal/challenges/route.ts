@@ -13,9 +13,7 @@ export async function GET(request: NextRequest) {
       Math.max(1, parseInt(searchParams.get("per_page") || "20", 10))
     );
 
-    const where: any = {
-      status: { notIn: ["draft"] },
-    };
+    const where: any = {};
 
     if (status === "active") {
       where.status = "active";
@@ -37,19 +35,10 @@ export async function GET(request: NextRequest) {
       prisma.challenge.count({ where }),
     ]);
 
-    const challengesWithCounts = await Promise.all(
-      challenges.map(async (c) => {
-        let submissionCount = 0;
-        if (c.submissionTag) {
-          const tag = await prisma.tag.findUnique({
-            where: { slug: c.submissionTag },
-            select: { photosCount: true },
-          });
-          submissionCount = tag?.photosCount ?? 0;
-        }
-        return { ...c, submissionCount };
-      })
-    );
+    const challengesWithCounts = challenges.map((c) => ({
+      ...c,
+      submissionCount: 0,
+    }));
 
     return NextResponse.json({
       challenges: challengesWithCounts,

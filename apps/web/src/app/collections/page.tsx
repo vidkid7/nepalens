@@ -103,7 +103,7 @@ export default function CollectionsPage() {
           <EmptyState
             title="No collections yet"
             description="Create your first collection to start organizing your favorite content."
-            action={{ label: "Create Collection", onClick: () => setShowCreate(true) }}
+            action={<button className="btn btn-primary" onClick={() => setShowCreate(true)}>Create Collection</button>}
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -135,7 +135,7 @@ export default function CollectionsPage() {
         )}
 
         {/* Create Modal */}
-        <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create Collection" size="md">
+        <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create Collection" size="md">
           <div className="space-y-4">
             <div>
               <label className="form-label">Name</label>

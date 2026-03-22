@@ -32,6 +32,8 @@ interface UploadFile {
   altText: string;
   tags: string;
   category: string;
+  location: string;
+  challengeId: string;
   error?: string;
   validationError?: string;
 }
@@ -63,7 +65,16 @@ export default function UploadPage() {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [challenges, setChallenges] = useState<Array<{ id: string; title: string; slug: string }>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch active challenges
+  useState(() => {
+    fetch("/api/internal/challenges?status=active")
+      .then((r) => r.ok ? r.json() : { challenges: [] })
+      .then((data) => setChallenges(data.challenges || []))
+      .catch(() => {});
+  });
 
   if (status === "loading") {
     return (
@@ -99,6 +110,8 @@ export default function UploadPage() {
         altText: file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
         tags: "",
         category: "None",
+        location: "",
+        challengeId: "",
       });
     });
 
@@ -178,6 +191,8 @@ export default function UploadPage() {
             description: files[i].description,
             altText: files[i].altText,
             category: files[i].category === "None" ? undefined : files[i].category,
+            location: files[i].location || undefined,
+            challengeId: files[i].challengeId || undefined,
             tags: files[i].tags
               .split(",")
               .map((t) => t.trim())
@@ -383,6 +398,31 @@ export default function UploadPage() {
                               ))}
                             </select>
                           </div>
+                          <div>
+                            <label className="form-label">Location</label>
+                            <input
+                              type="text"
+                              value={f.location}
+                              onChange={(e) => updateFile(i, { location: e.target.value })}
+                              placeholder="Where was this taken?"
+                              className="input"
+                            />
+                          </div>
+                          {challenges.length > 0 && (
+                            <div>
+                              <label className="form-label">Submit to Challenge</label>
+                              <select
+                                value={f.challengeId}
+                                onChange={(e) => updateFile(i, { challengeId: e.target.value })}
+                                className="input"
+                              >
+                                <option value="">No challenge</option>
+                                {challenges.map((ch) => (
+                                  <option key={ch.id} value={ch.id}>{ch.title}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                           <div className="sm:col-span-2">
                             <label className="form-label">Alt Text</label>
                             <input
