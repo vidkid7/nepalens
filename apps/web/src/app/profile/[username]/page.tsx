@@ -101,7 +101,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         height: p.height,
         src: {
           large: p.cdnKey
-            ? `${cdnBase}/photos/${p.id}/large.jpg`
+            ? `${cdnBase}/${p.cdnKey}`
             : p.originalUrl,
         },
         photographer: user.displayName || user.username,

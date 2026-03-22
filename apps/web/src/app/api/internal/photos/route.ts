@@ -313,6 +313,13 @@ function formatPhoto(
   cdnBase: string,
   liked: boolean,
 ) {
+  // For uploaded photos, cdnKey is the actual S3 path (e.g. "uploads/original/{userId}/{uuid}.jpg").
+  // Use it directly. The fake "/photos/{id}/large.jpg" paths only exist if the
+  // queue worker has processed the image — which hasn't happened for user uploads.
+  const displayUrl = p.cdnKey
+    ? `${cdnBase}/${p.cdnKey}`
+    : p.originalUrl;
+
   return {
     id: p.id,
     slug: p.slug,
@@ -325,14 +332,14 @@ function formatPhoto(
     avg_color: p.dominantColor || "#cccccc",
     blur_hash: p.blurHash,
     src: {
-      original: p.originalUrl,
-      large2x: p.cdnKey ? `${cdnBase}/photos/${p.id}/large2x.jpg` : p.originalUrl,
-      large: p.cdnKey ? `${cdnBase}/photos/${p.id}/large.jpg` : p.originalUrl,
-      medium: p.cdnKey ? `${cdnBase}/photos/${p.id}/medium.jpg` : p.originalUrl,
-      small: p.cdnKey ? `${cdnBase}/photos/${p.id}/small.jpg` : p.originalUrl,
-      portrait: p.cdnKey ? `${cdnBase}/photos/${p.id}/portrait.jpg` : p.originalUrl,
-      landscape: p.cdnKey ? `${cdnBase}/photos/${p.id}/landscape.jpg` : p.originalUrl,
-      tiny: p.cdnKey ? `${cdnBase}/photos/${p.id}/tiny.jpg` : p.originalUrl,
+      original: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      large2x: displayUrl,
+      large: displayUrl,
+      medium: displayUrl,
+      small: displayUrl,
+      portrait: displayUrl,
+      landscape: displayUrl,
+      tiny: displayUrl,
     },
     tags: p.tags.map((pt: any) => pt.tag.name),
     liked,

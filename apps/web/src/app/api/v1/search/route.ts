@@ -58,14 +58,14 @@ export async function GET(request: NextRequest) {
     liked: false,
     alt: p.altText || "",
     src: {
-      original: p.originalUrl,
-      large2x: p.cdnKey ? `${cdnBase}/photos/${p.id}/large2x.jpg` : p.originalUrl,
-      large: p.cdnKey ? `${cdnBase}/photos/${p.id}/large.jpg` : p.originalUrl,
-      medium: p.cdnKey ? `${cdnBase}/photos/${p.id}/medium.jpg` : p.originalUrl,
-      small: p.cdnKey ? `${cdnBase}/photos/${p.id}/small.jpg` : p.originalUrl,
-      portrait: p.cdnKey ? `${cdnBase}/photos/${p.id}/portrait.jpg` : p.originalUrl,
-      landscape: p.cdnKey ? `${cdnBase}/photos/${p.id}/landscape.jpg` : p.originalUrl,
-      tiny: p.cdnKey ? `${cdnBase}/photos/${p.id}/tiny.jpg` : p.originalUrl,
+      original: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      large2x: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      large: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      medium: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      small: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      portrait: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      landscape: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      tiny: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
     },
   }));
 

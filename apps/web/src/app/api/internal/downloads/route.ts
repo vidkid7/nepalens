@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       .map((d) => {
         const p = d.photo!;
         const src = p.cdnKey
-          ? `${cdnBase}/photos/${p.id}/large.jpg`
+          ? `${cdnBase}/${p.cdnKey}`
           : p.originalUrl;
         const photographer =
           p.user?.displayName || p.user?.username || "Unknown";
