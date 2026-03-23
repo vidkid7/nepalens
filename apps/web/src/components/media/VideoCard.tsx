@@ -26,12 +26,6 @@ interface VideoCardProps {
   };
 }
 
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 export default function VideoCard({ video }: VideoCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -165,38 +159,19 @@ export default function VideoCard({ video }: VideoCardProps) {
         </div>
       </Link>
 
-      {/* Video indicator (always visible) */}
+      {/* Video indicator icon */}
       <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5">
         {video.isPremium && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">
             ⭐ Pro
           </span>
         )}
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-sm text-white text-[10px] font-semibold shadow-lg">
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white shadow-lg">
+          <svg className="w-3 h-3 ml-px" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
-          VIDEO
         </span>
       </div>
-
-      {/* Duration badge */}
-      {video.duration != null && video.duration > 0 && (
-        <span className="absolute top-3 right-3 px-1.5 py-0.5 bg-black/70 backdrop-blur-sm text-white text-[10px] rounded-md font-semibold z-30">
-          {formatDuration(video.duration)}
-        </span>
-      )}
-
-      {/* Play button center - shows when not playing */}
-      {!(isHovered && isVideoReady) && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-          <div className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center opacity-60 group-hover:opacity-100 transition-opacity duration-300">
-            <svg className="w-6 h-6 ml-0.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-        </div>
-      )}
 
       {/* Gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20" />

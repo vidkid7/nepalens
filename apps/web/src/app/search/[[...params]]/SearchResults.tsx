@@ -85,13 +85,6 @@ const RELATED_TOPICS = [
 const TAB_KEYS = ["photos", "videos", "users"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return "";
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 export default function SearchPageClient({ keyword, initialFilters }: SearchPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -580,30 +573,19 @@ function VideoCard({ video }: { video: VideoResult }) {
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-      {/* Duration badge */}
-      {video.duration && (
-        <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-micro rounded font-medium z-10">
-          {formatDuration(video.duration)}
+      {/* Video icon badge */}
+      <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
+        {video.isPremium && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">
+            ⭐ Pro
+          </span>
+        )}
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white shadow-lg">
+          <svg className="w-3 h-3 ml-px" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
         </span>
-      )}
-
-      {/* Premium badge */}
-      {video.isPremium && (
-        <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-amber-500/90 text-white text-micro rounded font-semibold z-10">
-          PRO
-        </span>
-      )}
-
-      {/* Play button (shows on hover when video isn't playing yet) */}
-      {!(isHovered && isVideoReady) && (
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <svg className="w-6 h-6 ml-0.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* Info overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
