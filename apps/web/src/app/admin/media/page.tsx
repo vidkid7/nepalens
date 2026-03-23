@@ -386,24 +386,14 @@ export default function AdminMediaPage() {
   async function handleSingleAction(id: string, action: string) {
     setActionLoading(true);
     try {
-      if (action === "approved" || action === "rejected") {
-        const endpoint = action === "approved" ? "approve" : "reject";
-        const body: any = {};
-        if (action === "rejected" && moderatorNote) body.reason = moderatorNote;
-        const res = await fetch(`/api/admin/media/${id}/${endpoint}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) throw new Error();
-      } else {
-        const res = await fetch("/api/admin/media/bulk", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids: [id], action }),
-        });
-        if (!res.ok) throw new Error();
-      }
+      const body: any = { ids: [id], action };
+      if (action === "rejected" && moderatorNote) body.reason = moderatorNote;
+      const res = await fetch("/api/admin/media/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error();
 
       // Optimistic update
       setItems((prev) =>

@@ -22,7 +22,7 @@ interface LeaderboardData {
   lastRefreshed: string;
 }
 
-type Period = "30d" | "all-time";
+type Period = "30d" | "90d" | "all-time";
 type SortField = "views" | "downloads";
 
 function formatNumber(n: number): string {
@@ -370,19 +370,11 @@ export default function AdminLeaderboardPage() {
                     type="radio"
                     name="rankWindow"
                     value={opt.value}
-                    checked={period === opt.value || (opt.value === "90d" && false)}
-                    onChange={() => {
-                      if (opt.value === "30d" || opt.value === "all-time") {
-                        setPeriod(opt.value);
-                      }
-                    }}
+                    checked={period === opt.value}
+                    onChange={() => setPeriod(opt.value as Period)}
                     className="w-4 h-4 text-brand"
-                    disabled={opt.value === "90d"}
                   />
                   {opt.label}
-                  {opt.value === "90d" && (
-                    <span className="text-micro text-surface-400">(coming soon)</span>
-                  )}
                 </label>
               ))}
             </div>

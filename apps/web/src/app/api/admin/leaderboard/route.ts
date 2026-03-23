@@ -35,10 +35,13 @@ async function getExcludedUserIds(): Promise<Set<string>> {
 }
 
 async function computeLeaderboard(period: string, sort: string) {
-  const dateFilter =
-    period === "30d"
-      ? { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }
-      : {};
+  const periodMs: Record<string, number> = {
+    "30d": 30 * 24 * 60 * 60 * 1000,
+    "90d": 90 * 24 * 60 * 60 * 1000,
+  };
+  const dateFilter = periodMs[period]
+    ? { createdAt: { gte: new Date(Date.now() - periodMs[period]) } }
+    : {};
 
   const orderByField = sort === "downloads" ? "downloadsCount" : "viewsCount";
 
@@ -139,12 +142,7 @@ export async function PATCH(request: NextRequest) {
 
   if (action === "refresh") {
     // Invalidate all leaderboard cache keys
-    await Promise.all([
-      cacheDel("leaderboard:all-time:views"),
-      cacheDel("leaderboard:all-time:downloads"),
-      cacheDel("leaderboard:30d:views"),
-      cacheDel("leaderboard:30d:downloads"),
-    ]).catch(() => {});
+    await cacheDel("leaderboard:*").catch(() => {});
 
     await prisma.auditLog.create({
       data: {
@@ -178,12 +176,7 @@ export async function PATCH(request: NextRequest) {
     });
 
     // Invalidate cache so next GET reflects the exclusion
-    await Promise.all([
-      cacheDel("leaderboard:all-time:views"),
-      cacheDel("leaderboard:all-time:downloads"),
-      cacheDel("leaderboard:30d:views"),
-      cacheDel("leaderboard:30d:downloads"),
-    ]).catch(() => {});
+    await cacheDel("leaderboard:*").catch(() => {});
 
     return NextResponse.json({
       success: true,
@@ -208,12 +201,7 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
-    await Promise.all([
-      cacheDel("leaderboard:all-time:views"),
-      cacheDel("leaderboard:all-time:downloads"),
-      cacheDel("leaderboard:30d:views"),
-      cacheDel("leaderboard:30d:downloads"),
-    ]).catch(() => {});
+    await cacheDel("leaderboard:*").catch(() => {});
 
     return NextResponse.json({
       success: true,
