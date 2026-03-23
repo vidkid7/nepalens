@@ -4,6 +4,8 @@ import { prisma } from "@nepalens/database";
 import { notFound } from "next/navigation";
 import PhotoDetailClient from "./PhotoDetailClient";
 
+export const dynamic = 'force-dynamic';
+
 interface PhotoPageProps {
   params: Promise<{ slug: string }>;
 }

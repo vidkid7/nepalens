@@ -7,6 +7,8 @@ import type { CategoryItem } from "@/components/home/CategoryChips";
 import { prisma } from "@nepalens/database";
 import { cached, CacheTTL } from "@/lib/cache";
 
+export const dynamic = 'force-dynamic';
+
 /* ─── helpers ─── */
 
 function getPhotoUrl(

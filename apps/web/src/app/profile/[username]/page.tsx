@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import ProfileContent from "./ProfileContent";
 
+export const dynamic = 'force-dynamic';
+
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
 }

@@ -1,6 +1,8 @@
 import { prisma } from "@nepalens/database";
 import { PricingPageClient } from "./pricing-client";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Pricing — NepaLens",
   description: "Choose the perfect plan for your creative needs. From free downloads to unlimited commercial use.",

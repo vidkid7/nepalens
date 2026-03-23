@@ -7,6 +7,8 @@ import Link from "next/link";
 import Avatar from "@/components/ui/Avatar";
 import CollectionDetailClient from "./CollectionDetailClient";
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ id: string }>;
 }

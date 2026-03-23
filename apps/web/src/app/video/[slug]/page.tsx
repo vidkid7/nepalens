@@ -3,6 +3,8 @@ import { prisma } from "@nepalens/database";
 import { notFound } from "next/navigation";
 import VideoDetailClient from "./VideoDetailClient";
 
+export const dynamic = 'force-dynamic';
+
 interface VideoPageProps {
   params: Promise<{ slug: string }>;
 }
