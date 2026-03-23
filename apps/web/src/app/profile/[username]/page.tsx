@@ -59,14 +59,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     prisma.photo.findFirst({
       where: { userId: user.id, status: "approved" },
       orderBy: { viewsCount: "desc" },
-      select: { id: true, cdnKey: true, originalUrl: true },
+      select: { id: true, cdnKey: true, originalUrl: true, isPremium: true },
     }),
   ]);
 
   const topPhotoUrl = topPhoto
-    ? topPhoto.cdnKey
-      ? `${cdnBase}/photos/${topPhoto.id}/large2x.jpg`
-      : topPhoto.originalUrl
+    ? topPhoto.isPremium
+      ? `/api/internal/photos/${topPhoto.id}/preview?w=1200`
+      : topPhoto.cdnKey
+        ? `${cdnBase}/${topPhoto.cdnKey}`
+        : topPhoto.originalUrl
     : null;
 
   return (
@@ -99,10 +101,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         alt: p.altText,
         width: p.width,
         height: p.height,
+        isPremium: p.isPremium || false,
         src: {
-          large: p.cdnKey
-            ? `${cdnBase}/${p.cdnKey}`
-            : p.originalUrl,
+          large: p.isPremium
+            ? `/api/internal/photos/${p.id}/preview?w=1200`
+            : p.cdnKey
+              ? `${cdnBase}/${p.cdnKey}`
+              : p.originalUrl,
         },
         photographer: user.displayName || user.username,
         photographer_url: `/profile/${user.username}`,

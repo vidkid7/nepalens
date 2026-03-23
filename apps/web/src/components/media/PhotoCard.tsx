@@ -60,39 +60,39 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
     async (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      // Premium images need Pro or free-tier quota; free images always downloadable
-      if (photo.isPremium && !isPro && !session) {
-        window.location.href = "/login";
+      // Premium images are Pro-only
+      if (photo.isPremium && !isPro) {
+        if (!session) {
+          window.location.href = "/login";
+        } else {
+          toast("Premium photos are available only for Pro subscribers", "info");
+          router.push("/pricing");
+        }
         return;
       }
       setDownloading(true);
+      const size = isPro ? "original" : "large";
       try {
         const res = await fetch(`/api/internal/photos/${photo.id}/download`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ size: "original" }),
+          body: JSON.stringify({ size }),
         });
         const data = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
-        if (!res.ok && !data.requiresLogin && !data.quotaExceeded) {
+        if (data.upgradeRequired) {
+          toast(data.message || "Upgrade to Pro to download this photo", "info");
+          router.push("/pricing");
+          setDownloading(false);
+          return;
+        }
+        if (!res.ok) {
           toast(data.error || data.message || "Download failed", "error");
-          setDownloading(false);
-          return;
-        }
-        if (data.requiresLogin) {
-          window.location.href = "/login?callbackUrl=" + encodeURIComponent(window.location.pathname);
-          setDownloading(false);
-          return;
-        }
-        if (data.quotaExceeded) {
-          toast(data.message || "Download limit reached. Upgrade to Pro.", "error");
           setDownloading(false);
           return;
         }
         if (data.url) {
           await triggerFileDownload(data.url, `pixelstock-${photo.slug}.jpg`);
-          toast(data.remainingDownloads !== undefined
-            ? `Downloaded (${data.remainingDownloads} premium left)`
-            : "Download started", "success");
+          toast("Download started", "success");
         } else {
           toast(data.error || "Download link unavailable", "error");
         }

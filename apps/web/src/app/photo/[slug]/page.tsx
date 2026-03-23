@@ -60,8 +60,16 @@ export async function generateMetadata({ params }: PhotoPageProps): Promise<Meta
   return {
     title: `${title} | Free Stock Photo`,
     description: `Download this free photo. Free for personal and commercial use.`,
-    openGraph: photo?.cdnKey ? {
-      images: [{ url: `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`, width: photo.width, height: photo.height }],
+    openGraph: photo ? {
+      images: [{
+        url: photo.isPremium
+          ? `/api/internal/photos/${photo.id}/preview?w=1200`
+          : photo.cdnKey
+            ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
+            : photo.originalUrl || '',
+        width: photo.width,
+        height: photo.height,
+      }],
     } : undefined,
   };
 }
@@ -78,9 +86,11 @@ export default async function PhotoDetailPage({ params }: PhotoPageProps) {
     ? {
         id: photo.id,
         title: photo.altText || photo.description || fallbackTitle || "Untitled",
-        src: photo.cdnKey
-          ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
-          : photo.originalUrl || `https://placehold.co/1200x800/264653/ffffff?text=${encodeURIComponent(fallbackTitle || "Photo")}`,
+        src: photo.isPremium
+          ? `/api/internal/photos/${photo.id}/preview?w=1920`
+          : photo.cdnKey
+            ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
+            : photo.originalUrl || `https://placehold.co/1200x800/264653/ffffff?text=${encodeURIComponent(fallbackTitle || "Photo")}`,
         width: photo.width,
         height: photo.height,
         isPremium: photo.isPremium,

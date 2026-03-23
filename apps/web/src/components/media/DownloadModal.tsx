@@ -60,6 +60,22 @@ export default function DownloadModal({
 
   const handleDownload = useCallback(
     async (variant: DownloadVariant) => {
+      // Premium images are Pro-only — block all sizes
+      if (photo.isPremium && !isPro) {
+        onClose();
+        router.push("/pricing");
+        toast("Premium photos are available only for Pro subscribers", "info");
+        return;
+      }
+
+      // Block original quality for non-Pro on free images too
+      if (variant.key === "original" && !isPro) {
+        onClose();
+        router.push("/pricing");
+        toast("Upgrade to Pro for original quality downloads", "info");
+        return;
+      }
+
       setDownloadingKey(variant.key);
       try {
         const res = await fetch(
@@ -72,31 +88,23 @@ export default function DownloadModal({
         );
         const data = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
 
-        if (!res.ok && !data.requiresLogin && !data.quotaExceeded) {
+        if (data.upgradeRequired) {
+          onClose();
+          router.push("/pricing");
+          toast(data.message || "Upgrade to Pro for original quality", "info");
+          setDownloadingKey(null);
+          return;
+        }
+
+        if (!res.ok) {
           toast(data.error || data.message || "Download failed", "error");
           setDownloadingKey(null);
           return;
         }
 
-        if (data.requiresLogin) {
-          onClose();
-          router.push("/auth/signin");
-          return;
-        }
-        if (data.quotaExceeded) {
-          toast(data.message || "Monthly download limit reached", "error");
-          onClose();
-          router.push("/pricing");
-          return;
-        }
         if (data.url) {
           await triggerFileDownload(data.url, `pixelstock-${photo.id}-${variant.key}.jpg`);
-
-          if (data.remainingDownloads !== undefined) {
-            toast(`Download started · ${data.remainingDownloads} premium downloads remaining`, "success");
-          } else {
-            toast("Download started", "success");
-          }
+          toast("Download started", "success");
           onClose();
         } else {
           toast(data.error || "Download link unavailable", "error");
@@ -106,12 +114,10 @@ export default function DownloadModal({
       }
       setDownloadingKey(null);
     },
-    [photo.id, toast, onClose, router]
+    [photo.id, toast, onClose, router, isPro]
   );
 
-  // Premium image + non-Pro user who isn't logged in
-  // The API will return requiresLogin, but we can show upsell directly
-  const showUpsell = photo.isPremium && !isPro;
+  const showPremiumUpsell = photo.isPremium && !isPro;
 
   const title = photo.isPremium
     ? (isPro ? "Download Premium Photo" : "Premium Photo")
@@ -119,14 +125,14 @@ export default function DownloadModal({
 
   return (
     <Modal open={open} onClose={onClose} title={title} size="sm">
-      {showUpsell && (
+      {showPremiumUpsell && (
         <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200">
           <div className="flex items-start gap-2">
             <span className="text-amber-500 text-lg">⭐</span>
             <div className="text-sm">
-              <p className="font-medium text-amber-800">Premium Content</p>
+              <p className="font-medium text-amber-800">Premium Content — Pro Only</p>
               <p className="text-amber-600 text-xs mt-0.5">
-                Free users get 5 premium downloads per month. Upgrade to Pro for unlimited access.
+                This is a premium photo. Upgrade to Pro to download it in any resolution.
               </p>
             </div>
           </div>
@@ -138,21 +144,32 @@ export default function DownloadModal({
           const dims = calcDimensions(photo.width, photo.height, variant.maxWidth);
           const isDownloading = downloadingKey === variant.key;
           const isOriginal = variant.key === "original";
+          // Lock ALL sizes for premium + non-Pro; also lock original for non-Pro on free images
+          const isLocked = (!isPro && photo.isPremium) || (isOriginal && !isPro);
 
           return (
             <button
               key={variant.key}
-              onClick={() => handleDownload(variant)}
-              disabled={downloadingKey !== null}
+              onClick={() => isLocked
+                ? (() => { onClose(); router.push("/pricing"); toast(photo.isPremium ? "Premium photos require a Pro subscription" : "Upgrade to Pro for original quality downloads", "info"); })()
+                : handleDownload(variant)
+              }
+              disabled={downloadingKey !== null && !isLocked}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                isOriginal
-                  ? "border-brand/20 bg-brand-50 hover:bg-brand-100"
-                  : "border-surface-200 hover:bg-surface-50"
-              } ${downloadingKey !== null && !isDownloading ? "opacity-50" : ""}`}
+                isLocked
+                  ? "border-amber-200 bg-amber-50/50 hover:bg-amber-50 cursor-pointer"
+                  : isOriginal
+                    ? "border-brand/20 bg-brand-50 hover:bg-brand-100"
+                    : "border-surface-200 hover:bg-surface-50"
+              } ${downloadingKey !== null && !isDownloading && !isLocked ? "opacity-50" : ""}`}
             >
               <div className="flex items-center gap-3">
                 {isDownloading ? (
                   <div className="w-5 h-5 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />
+                ) : isLocked ? (
+                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
                 ) : (
                   <svg
                     className={`w-5 h-5 ${isOriginal ? "text-brand" : "text-surface-400"}`}
@@ -171,18 +188,24 @@ export default function DownloadModal({
                 <div className="text-left">
                   <p
                     className={`text-caption font-medium ${
-                      isOriginal ? "text-brand" : "text-surface-700"
+                      isLocked ? "text-amber-700" : isOriginal ? "text-brand" : "text-surface-700"
                     }`}
                   >
                     {variant.label}
-                    {isOriginal && (
+                    {isLocked ? (
+                      <span className="ml-2 text-micro bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold">
+                        PRO
+                      </span>
+                    ) : isOriginal ? (
                       <span className="ml-2 text-micro bg-brand/10 text-brand px-1.5 py-0.5 rounded">
                         Best
                       </span>
-                    )}
+                    ) : null}
                   </p>
                   <p className="text-micro text-surface-400">
-                    {variant.description}
+                    {isLocked
+                      ? (photo.isPremium ? "Pro subscription required" : "Upgrade to Pro for full resolution")
+                      : variant.description}
                   </p>
                 </div>
               </div>
@@ -197,17 +220,19 @@ export default function DownloadModal({
 
       <p className="text-micro text-surface-400 mt-4 text-center">
         {photo.isPremium
-          ? (isPro ? "Pro subscriber · Commercial license included" : "Free tier · 5 premium downloads/month")
-          : "Free download · PixelStock License"
+          ? (isPro ? "Pro subscriber · Commercial license included" : "Pro subscription required to download premium photos")
+          : isPro
+            ? "Pro subscriber · All resolutions available"
+            : "Original quality requires Pro · PixelStock License"
         }
       </p>
 
-      {showUpsell && (
+      {!isPro && (
         <button
           onClick={() => { onClose(); router.push("/pricing"); }}
           className="w-full mt-3 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition-all text-sm"
         >
-          Upgrade to Pro — Unlimited Downloads
+          Upgrade to Pro — Premium Photos + Original Quality + Unlimited Downloads
         </button>
       )}
     </Modal>

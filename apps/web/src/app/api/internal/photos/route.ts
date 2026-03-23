@@ -313,12 +313,19 @@ function formatPhoto(
   cdnBase: string,
   liked: boolean,
 ) {
-  // For uploaded photos, cdnKey is the actual S3 path (e.g. "uploads/original/{userId}/{uuid}.jpg").
-  // Use it directly. The fake "/photos/{id}/large.jpg" paths only exist if the
-  // queue worker has processed the image — which hasn't happened for user uploads.
-  const displayUrl = p.cdnKey
-    ? `${cdnBase}/${p.cdnKey}`
-    : p.originalUrl;
+  const isPremium = p.isPremium || false;
+
+  // For premium images, use the auth proxy so raw CDN URL is never exposed
+  // to non-Pro users. The proxy bakes watermarks server-side.
+  const displayUrl = isPremium
+    ? `/api/internal/photos/${p.id}/preview?w=1200`
+    : p.cdnKey
+      ? `${cdnBase}/${p.cdnKey}`
+      : p.originalUrl;
+
+  const smallUrl = isPremium
+    ? `/api/internal/photos/${p.id}/preview?w=640`
+    : displayUrl;
 
   return {
     id: p.id,
@@ -332,18 +339,18 @@ function formatPhoto(
     avg_color: p.dominantColor || "#cccccc",
     blur_hash: p.blurHash,
     src: {
-      original: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+      original: displayUrl,
       large2x: displayUrl,
       large: displayUrl,
       medium: displayUrl,
-      small: displayUrl,
+      small: smallUrl,
       portrait: displayUrl,
       landscape: displayUrl,
-      tiny: displayUrl,
+      tiny: smallUrl,
     },
     tags: p.tags.map((pt: any) => pt.tag.name),
     liked,
-    isPremium: p.isPremium || false,
+    isPremium,
     created_at: p.createdAt.toISOString(),
   };
 }

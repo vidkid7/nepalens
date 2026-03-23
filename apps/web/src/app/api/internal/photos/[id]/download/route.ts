@@ -4,38 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isProSubscriber } from "@/lib/subscription";
 
-const FREE_PREMIUM_PHOTO_LIMIT = 5;
-
-/**
- * Count how many premium photo downloads a user has made this month.
- */
-async function getPremiumPhotoDownloadsThisMonth(userId: string): Promise<number> {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  // Get IDs of premium photos
-  const downloads = await prisma.download.findMany({
-    where: {
-      userId,
-      mediaType: "photo",
-      createdAt: { gte: monthStart },
-    },
-    select: { mediaId: true },
-  });
-
-  if (downloads.length === 0) return 0;
-
-  const mediaIds = [...new Set(downloads.map((d) => d.mediaId))];
-
-  const premiumCount = await prisma.photo.count({
-    where: {
-      id: { in: mediaIds },
-      isPremium: true,
-    },
-  });
-
-  return premiumCount;
-}
+// Premium images are exclusively available to Pro subscribers — no free-tier quota.
 
 // POST /api/internal/photos/[id]/download — Track download and return URL
 export async function POST(
@@ -66,12 +35,21 @@ export async function POST(
 
   const isPro = await isProSubscriber(userId);
 
+  // --- Original quality is Pro-only for ALL images ---
+  if (sizeVariant === "original" && !isPro) {
+    return NextResponse.json(
+      {
+        error: "Pro required",
+        upgradeRequired: true,
+        message: "Original quality downloads are available for Pro subscribers only. Upgrade to Pro for full resolution access.",
+      },
+      { status: 403 }
+    );
+  }
+
   // --- Access control logic ---
   // Free images: anyone can download (no login needed)
-  // Premium images:
-  //   - Pro users: unlimited
-  //   - Free users (logged in): 5 premium photos/month
-  //   - Anonymous: must log in first
+  // Premium images: Pro users ONLY — no free-tier downloads allowed
 
   if (photo.isPremium) {
     if (!userId) {
@@ -86,19 +64,14 @@ export async function POST(
     }
 
     if (!isPro) {
-      const premiumCount = await getPremiumPhotoDownloadsThisMonth(userId);
-      if (premiumCount >= FREE_PREMIUM_PHOTO_LIMIT) {
-        return NextResponse.json(
-          {
-            error: "Monthly limit reached",
-            quotaExceeded: true,
-            premiumDownloadsUsed: premiumCount,
-            premiumDownloadsLimit: FREE_PREMIUM_PHOTO_LIMIT,
-            message: `You've used all ${FREE_PREMIUM_PHOTO_LIMIT} free premium downloads this month. Upgrade to Pro for unlimited access.`,
-          },
-          { status: 403 }
-        );
-      }
+      return NextResponse.json(
+        {
+          error: "Pro required",
+          upgradeRequired: true,
+          message: "Premium photos are available exclusively for Pro subscribers. Upgrade to Pro for unlimited premium downloads.",
+        },
+        { status: 403 }
+      );
     }
   }
 
@@ -128,15 +101,7 @@ export async function POST(
   // Build download URL — point to the file endpoint which resizes on-the-fly
   const downloadUrl = `/api/internal/photos/${id}/file?size=${encodeURIComponent(sizeVariant)}`;
 
-  // Return remaining downloads info for free users downloading premium
   const response: Record<string, unknown> = { url: downloadUrl };
-
-  if (photo.isPremium && !isPro && userId) {
-    const usedAfter = (await getPremiumPhotoDownloadsThisMonth(userId));
-    response.remainingDownloads = Math.max(0, FREE_PREMIUM_PHOTO_LIMIT - usedAfter);
-    response.premiumDownloadsUsed = usedAfter;
-    response.premiumDownloadsLimit = FREE_PREMIUM_PHOTO_LIMIT;
-  }
 
   return NextResponse.json(response);
   } catch (err: any) {

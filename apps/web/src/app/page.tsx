@@ -11,9 +11,13 @@ const TRENDING_TAGS = [
 ];
 
 function getPhotoUrl(
-  photo: { id: string; cdnKey: string | null; originalUrl: string },
+  photo: { id: string; cdnKey: string | null; originalUrl: string; isPremium?: boolean },
   _size = "large"
 ) {
+  // Premium images go through auth proxy (bakes watermark for non-Pro users)
+  if (photo.isPremium) {
+    return `/api/internal/photos/${photo.id}/preview?w=800`;
+  }
   const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
   return photo.cdnKey
     ? `${cdnBase}/${photo.cdnKey}`
@@ -83,6 +87,7 @@ async function getFeaturedCollections() {
                   cdnKey: true,
                   originalUrl: true,
                   dominantColor: true,
+                  isPremium: true,
                 },
               },
             },

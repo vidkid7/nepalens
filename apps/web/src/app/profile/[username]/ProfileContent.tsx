@@ -20,6 +20,7 @@ interface PhotoItem {
   photographer: string;
   photographer_url: string;
   avg_color: string | null;
+  isPremium?: boolean;
 }
 
 interface CollectionItem {

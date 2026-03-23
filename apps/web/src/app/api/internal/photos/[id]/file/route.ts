@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@pixelstock/database";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { isProSubscriber } from "@/lib/subscription";
 import path from "path";
 import fs from "fs/promises";
 import sharp from "sharp";
@@ -17,6 +20,11 @@ const SIZE_MAP: Record<string, number | null> = {
  * Serves the actual image binary, resized on-the-fly when a smaller
  * variant is requested. Works for both local stock images (public/)
  * and MinIO-uploaded images.
+ *
+ * Access control:
+ *  - Premium images: Pro users only (all sizes)
+ *  - Original size: Pro users only (all images)
+ *  - Free images (non-original): anyone
  */
 export async function GET(
   request: NextRequest,
@@ -29,11 +37,32 @@ export async function GET(
 
     const photo = await prisma.photo.findUnique({
       where: { id },
-      select: { id: true, originalUrl: true, cdnKey: true, width: true, height: true },
+      select: { id: true, originalUrl: true, cdnKey: true, width: true, height: true, isPremium: true },
     });
 
     if (!photo) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // --- Access control ---
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as any)?.id || null;
+    const isPro = await isProSubscriber(userId);
+
+    // Premium images: Pro only (all sizes)
+    if (photo.isPremium && !isPro) {
+      return NextResponse.json(
+        { error: "Premium photos are available only for Pro subscribers." },
+        { status: 403 }
+      );
+    }
+
+    // Original quality: Pro only (all images)
+    if (size === "original" && !isPro) {
+      return NextResponse.json(
+        { error: "Original quality requires a Pro subscription." },
+        { status: 403 }
+      );
     }
 
     // --- Resolve the original image bytes ---

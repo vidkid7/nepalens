@@ -24,6 +24,14 @@ export async function GET(
   }
 
   const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
+  const isPremium = photo.isPremium || false;
+  const displayUrl = isPremium
+    ? `/api/internal/photos/${photo.id}/preview?w=1200`
+    : photo.cdnKey ? `${cdnBase}/${photo.cdnKey}` : photo.originalUrl;
+  const smallUrl = isPremium
+    ? `/api/internal/photos/${photo.id}/preview?w=640`
+    : displayUrl;
+
   return NextResponse.json(
     {
       id: photo.id,
@@ -36,15 +44,16 @@ export async function GET(
       avg_color: photo.dominantColor || "#cccccc",
       liked: false,
       alt: photo.altText || "",
+      isPremium,
       src: {
-        original: photo.originalUrl,
-        large2x: photo.cdnKey ? `${cdnBase}/photos/${photo.id}/large2x.jpg` : photo.originalUrl,
-        large: photo.cdnKey ? `${cdnBase}/photos/${photo.id}/large.jpg` : photo.originalUrl,
-        medium: photo.cdnKey ? `${cdnBase}/photos/${photo.id}/medium.jpg` : photo.originalUrl,
-        small: photo.cdnKey ? `${cdnBase}/photos/${photo.id}/small.jpg` : photo.originalUrl,
-        portrait: photo.cdnKey ? `${cdnBase}/photos/${photo.id}/portrait.jpg` : photo.originalUrl,
-        landscape: photo.cdnKey ? `${cdnBase}/photos/${photo.id}/landscape.jpg` : photo.originalUrl,
-        tiny: photo.cdnKey ? `${cdnBase}/photos/${photo.id}/tiny.jpg` : photo.originalUrl,
+        original: displayUrl,
+        large2x: displayUrl,
+        large: displayUrl,
+        medium: displayUrl,
+        small: smallUrl,
+        portrait: displayUrl,
+        landscape: displayUrl,
+        tiny: smallUrl,
       },
     },
     { headers }

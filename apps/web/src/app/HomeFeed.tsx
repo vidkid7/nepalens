@@ -28,6 +28,7 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState(false);
   const [columns, setColumns] = useState(3);
 
   useEffect(() => {
@@ -48,9 +49,11 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
       const res = await fetch(`/api/internal/photos?page=${pageNum}&per_page=30&sort=${sort}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
+      setError(false);
       return data.photos as Photo[];
     } catch {
-      return generatePlaceholders(pageNum);
+      setError(true);
+      return [];
     }
   }, [sort]);
 
@@ -58,6 +61,7 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
     setLoading(true);
     setPage(1);
     setHasMore(true);
+    setError(false);
     fetchPhotos(1).then((data) => {
       setPhotos(data);
       setLoading(false);
@@ -76,9 +80,42 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
     if (newPhotos.length < 30) setHasMore(false);
   }, [page, loading, fetchPhotos]);
 
-  // Show skeleton on initial load
   if (photos.length === 0 && loading) {
     return <MasonryGridSkeleton columns={columns} />;
+  }
+
+  if (photos.length === 0 && error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-surface-700 mb-1">Unable to load photos</h3>
+        <p className="text-sm text-surface-500 mb-4">Something went wrong. Please try again.</p>
+        <button
+          onClick={() => { setError(false); setLoading(true); fetchPhotos(1).then(d => { setPhotos(d); setLoading(false); }); }}
+          className="btn btn-sm btn-brand"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (photos.length === 0 && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-surface-700 mb-1">No photos yet</h3>
+        <p className="text-sm text-surface-500">Be the first to share your work with the community.</p>
+      </div>
+    );
   }
 
   return (
@@ -86,29 +123,4 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
       <MasonryGrid photos={photos} columns={columns} />
     </InfiniteScroll>
   );
-}
-
-function generatePlaceholders(page: number): Photo[] {
-  const colors = [
-    "#1a1a2e", "#16213e", "#0f3460", "#e94560", "#533483",
-    "#2b2d42", "#8d99ae", "#ef233c", "#264653", "#2a9d8f",
-    "#e9c46a", "#f4a261", "#e76f51", "#606c38", "#283618",
-  ];
-  return Array.from({ length: 15 }, (_, i) => {
-    const isPortrait = i % 3 === 0;
-    const w = isPortrait ? 3000 : 5000;
-    const h = isPortrait ? 4500 : 3333;
-    const color = colors[(page * 15 + i) % colors.length];
-    return {
-      id: `placeholder-${page}-${i}`,
-      slug: `sample-photo-${page}-${i}`,
-      alt: `Sample photo ${page * 15 + i + 1}`,
-      width: w,
-      height: h,
-      src: { large: `https://placehold.co/${Math.round(w / 5)}x${Math.round(h / 5)}/${color.slice(1)}/ffffff?text=Photo+${page * 15 + i + 1}` },
-      photographer: ["John Doe", "Jane Smith", "Alex Camera"][i % 3],
-      photographer_url: `/profile/${["johndoe", "janephoto", "alexcam"][i % 3]}`,
-      avg_color: color,
-    };
-  });
 }

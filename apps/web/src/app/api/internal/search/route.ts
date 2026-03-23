@@ -58,7 +58,16 @@ export async function GET(request: NextRequest) {
       });
 
       const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
-      const formatted = photos.map((p) => ({
+      const formatted = photos.map((p) => {
+        const isPremium = p.isPremium || false;
+        const displayUrl = isPremium
+          ? `/api/internal/photos/${p.id}/preview?w=1200`
+          : p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl;
+        const smallUrl = isPremium
+          ? `/api/internal/photos/${p.id}/preview?w=640`
+          : displayUrl;
+
+        return {
         id: p.id,
         slug: p.slug,
         alt: p.altText,
@@ -69,20 +78,22 @@ export async function GET(request: NextRequest) {
         photographer_id: p.userId,
         avg_color: p.dominantColor || "#cccccc",
         blur_hash: p.blurHash,
+        isPremium,
         src: {
-          original: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
-          large2x: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
-          large: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
-          medium: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
-          small: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
-          portrait: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
-          landscape: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
-          tiny: p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl,
+          original: displayUrl,
+          large2x: displayUrl,
+          large: displayUrl,
+          medium: displayUrl,
+          small: smallUrl,
+          portrait: displayUrl,
+          landscape: displayUrl,
+          tiny: smallUrl,
         },
         tags: p.tags.map((pt) => pt.tag.name),
         liked: false,
         created_at: p.createdAt.toISOString(),
-      }));
+      };
+      });
 
       return { results: formatted, total_results: photoCount, page, per_page: perPage, counts };
     }

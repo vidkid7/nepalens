@@ -40,9 +40,12 @@ export async function GET(request: NextRequest) {
       .filter((d) => d.photo !== null)
       .map((d) => {
         const p = d.photo!;
-        const src = p.cdnKey
-          ? `${cdnBase}/${p.cdnKey}`
-          : p.originalUrl;
+        const isPremium = p.isPremium || false;
+        const src = isPremium
+          ? `/api/internal/photos/${p.id}/preview?w=1200`
+          : p.cdnKey
+            ? `${cdnBase}/${p.cdnKey}`
+            : p.originalUrl;
         const photographer =
           p.user?.displayName || p.user?.username || "Unknown";
         const photographerUrl = p.user?.username
@@ -59,6 +62,7 @@ export async function GET(request: NextRequest) {
           photographer,
           photographer_url: photographerUrl,
           avg_color: p.avgColor || p.dominantColor || "#cccccc",
+          isPremium,
         };
       });
 

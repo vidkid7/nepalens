@@ -70,39 +70,39 @@ export default function PhotoDetailClient({
   }, [session, photo.id, toast]);
 
   const handleDownload = useCallback(async () => {
-    // Premium images require Pro or quota; free images are always downloadable
-    if (photo.isPremium && !isPro && !session) {
-      router.push("/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+    // Premium images are Pro-only
+    if (photo.isPremium && !isPro) {
+      if (!session) {
+        router.push("/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
+      } else {
+        toast("Premium photos are available only for Pro subscribers", "info");
+        router.push("/pricing");
+      }
       return;
     }
     setDownloading(true);
+    const size = isPro ? "original" : "large";
     try {
       const res = await fetch(`/api/internal/photos/${photo.id}/download`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ size: "original" }),
+        body: JSON.stringify({ size }),
       });
       const data = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
-      if (!res.ok && !data.requiresLogin && !data.quotaExceeded) {
+      if (data.upgradeRequired) {
+        toast(data.message || "Upgrade to Pro to download this photo", "info");
+        router.push("/pricing");
+        setDownloading(false);
+        return;
+      }
+      if (!res.ok) {
         toast(data.error || data.message || "Download failed", "error");
-        setDownloading(false);
-        return;
-      }
-      if (data.requiresLogin) {
-        router.push("/login?callbackUrl=" + encodeURIComponent(window.location.pathname));
-        setDownloading(false);
-        return;
-      }
-      if (data.quotaExceeded) {
-        toast(data.message || "Monthly download limit reached. Upgrade to Pro for unlimited.", "error");
         setDownloading(false);
         return;
       }
       if (data.url) {
         await triggerFileDownload(data.url, `pixelstock-${photo.id}.jpg`);
-        toast(data.remainingDownloads !== undefined
-          ? `Download started (${data.remainingDownloads} premium downloads left this month)`
-          : "Download started", "success");
+        toast("Download started", "success");
       } else {
         toast(data.error || "Download link unavailable", "error");
       }
@@ -136,9 +136,11 @@ export default function PhotoDetailClient({
     width: p.width,
     height: p.height,
     src: {
-      large: p.cdnKey
-        ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${p.cdnKey}`
-        : p.originalUrl || `https://placehold.co/600x400/264653/fff?text=Photo`,
+      large: p.isPremium
+        ? `/api/internal/photos/${p.id}/preview?w=1200`
+        : p.cdnKey
+          ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${p.cdnKey}`
+          : p.originalUrl || `https://placehold.co/600x400/264653/fff?text=Photo`,
     },
     photographer: p.user?.displayName || "Photographer",
     photographer_url: `/profile/${p.user?.username || "user"}`,
