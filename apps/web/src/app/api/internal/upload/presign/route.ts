@@ -15,12 +15,16 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { contentType, filename } = body;
 
-  if (!contentType || !contentType.startsWith("image/")) {
-    return NextResponse.json({ error: "Invalid content type" }, { status: 400 });
+  const isImage = contentType && contentType.startsWith("image/");
+  const isVideo = contentType && contentType.startsWith("video/");
+
+  if (!contentType || (!isImage && !isVideo)) {
+    return NextResponse.json({ error: "Invalid content type. Only images and videos are allowed." }, { status: 400 });
   }
 
-  const ext = filename?.split(".").pop() || "jpg";
-  const key = `uploads/original/${userId}/${uuid()}.${ext}`;
+  const ext = filename?.split(".").pop() || (isVideo ? "mp4" : "jpg");
+  const mediaType = isVideo ? "videos" : "uploads";
+  const key = `${mediaType}/original/${userId}/${uuid()}.${ext}`;
 
   const url = await getPresignedUploadUrl(key, contentType);
 

@@ -5,8 +5,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+const VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+const ALL_ACCEPTED_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES];
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500 MB
 const CATEGORIES = [
   "None",
   "Nature",
@@ -22,9 +25,12 @@ const CATEGORIES = [
   "Black & White",
 ];
 
+type MediaType = "image" | "video";
+
 interface UploadFile {
   file: File;
   preview: string;
+  mediaType: MediaType;
   progress: number;
   status: "pending" | "uploading" | "processing" | "done" | "error";
   title: string;
@@ -37,6 +43,7 @@ interface UploadFile {
   isPremium: boolean;
   width: number;
   height: number;
+  duration: number;
   error?: string;
   validationError?: string;
 }
@@ -48,9 +55,36 @@ function formatBytes(bytes: number) {
 }
 
 function validateFile(file: File): string | null {
-  if (!ACCEPTED_TYPES.includes(file.type)) return "Unsupported format. Use JPEG, PNG, WebP, or AVIF.";
-  if (file.size > MAX_FILE_SIZE) return `File too large (${formatBytes(file.size)}). Max 50 MB.`;
+  const isImage = IMAGE_TYPES.includes(file.type);
+  const isVideo = VIDEO_TYPES.includes(file.type);
+  if (!isImage && !isVideo) return "Unsupported format. Use JPEG, PNG, WebP, AVIF, MP4, MOV, or WebM.";
+  if (isImage && file.size > MAX_IMAGE_SIZE) return `Image too large (${formatBytes(file.size)}). Max 50 MB.`;
+  if (isVideo && file.size > MAX_VIDEO_SIZE) return `Video too large (${formatBytes(file.size)}). Max 500 MB.`;
   return null;
+}
+
+function getMediaType(file: File): MediaType {
+  return VIDEO_TYPES.includes(file.type) ? "video" : "image";
+}
+
+function getVideoDimensions(file: File): Promise<{ width: number; height: number; duration: number }> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      resolve({
+        width: video.videoWidth || 1920,
+        height: video.videoHeight || 1080,
+        duration: video.duration || 0,
+      });
+      URL.revokeObjectURL(video.src);
+    };
+    video.onerror = () => {
+      resolve({ width: 1920, height: 1080, duration: 0 });
+      URL.revokeObjectURL(video.src);
+    };
+    video.src = URL.createObjectURL(file);
+  });
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -95,31 +129,23 @@ export default function UploadPage() {
   const addFiles = (newFiles: FileList | File[]) => {
     let skipped = 0;
 
-    Array.from(newFiles).forEach((file) => {
+    Array.from(newFiles).forEach(async (file) => {
       const validationError = validateFile(file);
       if (validationError) {
         skipped++;
         toast(validationError, "error");
         return;
       }
+      const mediaType = getMediaType(file);
       const preview = URL.createObjectURL(file);
 
-      // Extract image dimensions
-      const img = new Image();
-      img.onload = () => {
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.preview === preview ? { ...f, width: img.naturalWidth, height: img.naturalHeight } : f
-          )
-        );
-      };
-      img.src = preview;
-
+      // Add file immediately with default dimensions
       setFiles((prev) => [
         ...prev,
         {
           file,
           preview,
+          mediaType,
           progress: 0,
           status: "pending" as const,
           title: file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " "),
@@ -132,13 +158,35 @@ export default function UploadPage() {
           isPremium: false,
           width: 0,
           height: 0,
+          duration: 0,
         },
       ]);
+
+      // Extract dimensions async
+      if (mediaType === "image") {
+        const img = new Image();
+        img.onload = () => {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.preview === preview ? { ...f, width: img.naturalWidth, height: img.naturalHeight } : f
+            )
+          );
+        };
+        img.src = preview;
+      } else {
+        // Video: extract dimensions and duration
+        const meta = await getVideoDimensions(file);
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.preview === preview ? { ...f, width: meta.width, height: meta.height, duration: meta.duration } : f
+          )
+        );
+      }
     });
 
     const added = Array.from(newFiles).length - skipped;
     if (added > 0) {
-      toast(`${added} photo${added > 1 ? "s" : ""} added to queue`, "success");
+      toast(`${added} file${added > 1 ? "s" : ""} added to queue`, "success");
     }
   };
 
@@ -218,8 +266,10 @@ export default function UploadPage() {
         });
         updateFile(i, { progress: 70, status: "processing" });
 
-        // Step 3: Create photo record (include dimensions)
-        const createRes = await fetch("/api/internal/photos", {
+        // Step 3: Create media record (photo or video)
+        const isVideo = files[i].mediaType === "video";
+        const apiUrl = isVideo ? "/api/internal/videos" : "/api/internal/photos";
+        const createRes = await fetch(apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -233,6 +283,7 @@ export default function UploadPage() {
             isPremium: files[i].isPremium,
             width: files[i].width,
             height: files[i].height,
+            duration: isVideo ? files[i].duration : undefined,
             tags: files[i].tags
               .split(",")
               .map((t) => t.trim())
@@ -242,7 +293,7 @@ export default function UploadPage() {
 
         if (!createRes.ok) {
           const errBody = await createRes.json().catch(() => ({}));
-          throw new Error(errBody.error || `Failed to create photo record (${createRes.status})`);
+          throw new Error(errBody.error || `Failed to create ${isVideo ? "video" : "photo"} record (${createRes.status})`);
         }
         updateFile(i, { progress: 100, status: "done" });
         successCount++;
@@ -255,11 +306,11 @@ export default function UploadPage() {
     setIsUploading(false);
 
     if (successCount > 0 && failCount === 0) {
-      toast(`${successCount} photo${successCount > 1 ? "s" : ""} uploaded successfully!`, "success");
+      toast(`${successCount} file${successCount > 1 ? "s" : ""} uploaded successfully!`, "success");
     } else if (successCount > 0 && failCount > 0) {
       toast(`${successCount} uploaded, ${failCount} failed`, "warning");
     } else if (failCount > 0) {
-      toast(`Upload failed for ${failCount} photo${failCount > 1 ? "s" : ""}`, "error");
+      toast(`Upload failed for ${failCount} file${failCount > 1 ? "s" : ""}`, "error");
     }
   };
 
@@ -273,9 +324,9 @@ export default function UploadPage() {
       <div className="container-app max-w-4xl">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-display text-surface-900 mb-2">Upload Photos</h1>
+          <h1 className="text-display text-surface-900 mb-2">Upload Media</h1>
           <p className="text-body text-surface-500">
-            Share your best shots with the PixelStock community
+            Share your best photos and videos with the PixelStock community
           </p>
         </div>
 
@@ -302,22 +353,22 @@ export default function UploadPage() {
             </svg>
           </div>
           <p className="text-subtitle text-surface-900 mb-1.5">
-            Drag & drop photos here
+            Drag & drop photos or videos here
           </p>
           <p className="text-caption text-surface-500 mb-5">
             or click to browse your files
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            {["JPEG", "PNG", "WebP", "AVIF"].map((fmt) => (
+            {["JPEG", "PNG", "WebP", "AVIF", "MP4", "MOV", "WebM"].map((fmt) => (
               <span key={fmt} className="badge badge-neutral">{fmt}</span>
             ))}
             <span className="text-micro text-surface-400">•</span>
-            <span className="text-micro text-surface-400">50 MB max per file</span>
+            <span className="text-micro text-surface-400">50 MB images · 500 MB videos</span>
           </div>
           <input
             ref={inputRef}
             type="file"
-            accept={ACCEPTED_TYPES.join(",")}
+            accept={ALL_ACCEPTED_TYPES.join(",")}
             multiple
             className="hidden"
             onChange={(e) => {
@@ -365,7 +416,7 @@ export default function UploadPage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
-                        Upload {pendingCount} photo{pendingCount > 1 ? "s" : ""}
+                        Upload {pendingCount} file{pendingCount > 1 ? "s" : ""}
                       </>
                     )}
                   </button>
@@ -382,15 +433,27 @@ export default function UploadPage() {
                   <div className="flex gap-5">
                     {/* Thumbnail */}
                     <div className="relative flex-shrink-0">
-                      <img
-                        src={f.preview}
-                        alt={f.altText}
-                        className="w-28 h-28 object-cover rounded-xl"
-                      />
-                      <div className="absolute top-1.5 left-1.5">
+                      {f.mediaType === "video" ? (
+                        <video
+                          src={f.preview}
+                          className="w-28 h-28 object-cover rounded-xl bg-black"
+                          muted
+                          preload="metadata"
+                        />
+                      ) : (
+                        <img
+                          src={f.preview}
+                          alt={f.altText}
+                          className="w-28 h-28 object-cover rounded-xl"
+                        />
+                      )}
+                      <div className="absolute top-1.5 left-1.5 flex items-center gap-1">
                         <span className={STATUS_CONFIG[f.status].className}>
                           {STATUS_CONFIG[f.status].label}
                         </span>
+                        {f.mediaType === "video" && (
+                          <span className="badge badge-neutral">🎬 Video</span>
+                        )}
                       </div>
                     </div>
 
@@ -401,6 +464,8 @@ export default function UploadPage() {
                           <p className="text-label text-surface-900 truncate">{f.file.name}</p>
                           <p className="text-micro text-surface-400">
                             {formatBytes(f.file.size)} • {f.file.type.split("/")[1].toUpperCase()}
+                            {f.mediaType === "video" && f.duration > 0 && ` • ${Math.floor(f.duration / 60)}:${Math.floor(f.duration % 60).toString().padStart(2, "0")}`}
+                            {f.width > 0 && f.height > 0 && ` • ${f.width}×${f.height}`}
                           </p>
                         </div>
                         {f.status === "pending" && (
@@ -550,7 +615,7 @@ export default function UploadPage() {
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between">
                             <span className="text-micro text-surface-500">
-                              {f.status === "uploading" ? "Uploading to storage…" : "Processing image…"}
+                              {f.status === "uploading" ? "Uploading to storage…" : `Processing ${f.mediaType}…`}
                             </span>
                             <span className="text-micro text-surface-500 font-medium">{f.progress}%</span>
                           </div>
@@ -618,7 +683,7 @@ export default function UploadPage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
-                        Upload all {pendingCount} photo{pendingCount > 1 ? "s" : ""}
+                        Upload all {pendingCount} file{pendingCount > 1 ? "s" : ""}
                       </>
                     )}
                   </button>

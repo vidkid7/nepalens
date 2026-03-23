@@ -109,6 +109,7 @@ export default async function VideoDetailPage({ params }: VideoPageProps) {
         duration: video.durationSeconds,
         durationFormatted: formatDuration(video.durationSeconds),
         fps: video.frameRate,
+        isPremium: video.isPremium,
         thumbnailUrl:
           video.thumbnailUrl ||
           `https://placehold.co/${video.width}x${video.height}/1a1a1a/ffffff?text=${encodeURIComponent(fallbackTitle || "Video")}`,
@@ -144,6 +145,7 @@ export default async function VideoDetailPage({ params }: VideoPageProps) {
         duration: null,
         durationFormatted: "—",
         fps: null,
+        isPremium: false,
         thumbnailUrl: `https://placehold.co/1920x1080/1a1a1a/ffffff?text=${encodeURIComponent(fallbackTitle || "Video")}`,
         photographer: {
           username: "videographer",

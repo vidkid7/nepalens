@@ -34,7 +34,7 @@ export async function POST(
 
   const isPro = await isProSubscriber(userId);
 
-  // Premium videos: Pro users only
+  // Premium videos: Pro users only (any quality)
   if (video.isPremium) {
     if (!userId) {
       return NextResponse.json(
@@ -45,6 +45,23 @@ export async function POST(
     if (!isPro) {
       return NextResponse.json(
         { error: "Pro required", upgradeRequired: true, message: "Premium videos are available only for Pro subscribers." },
+        { status: 403 }
+      );
+    }
+  }
+
+  // Original / FHD quality: Pro users only (even for free videos)
+  const proOnlyQualities = ["original", "fhd", "4k", "uhd"];
+  if (proOnlyQualities.includes(quality)) {
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Login required", requiresLogin: true, message: "Sign in to download high-quality videos." },
+        { status: 401 }
+      );
+    }
+    if (!isPro) {
+      return NextResponse.json(
+        { error: "Pro required", upgradeRequired: true, message: `${quality.toUpperCase()} quality downloads require a Pro subscription.` },
         { status: 403 }
       );
     }

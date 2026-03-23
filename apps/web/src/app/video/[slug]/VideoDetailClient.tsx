@@ -29,6 +29,7 @@ interface VideoData {
   duration: number | null;
   durationFormatted: string;
   fps: number | null;
+  isPremium: boolean;
   thumbnailUrl: string;
   photographer: {
     username: string;
@@ -63,6 +64,7 @@ const QUALITY_LABELS: Record<string, string> = {
   fhd: "Full HD",
   "4k": "4K",
   uhd: "UHD",
+  original: "Original",
 };
 
 function formatDuration(seconds: number | null): string {
@@ -89,6 +91,17 @@ export default function VideoDetailClient({
   const [following, setFollowing] = useState(false);
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+
+  // Check if current user has Pro subscription
+  useEffect(() => {
+    if (session?.user) {
+      fetch("/api/internal/subscription/status")
+        .then((r) => r.ok ? r.json() : { isPro: false })
+        .then((data) => setIsPro(data.isPro === true || data.active === true))
+        .catch(() => setIsPro(false));
+    }
+  }, [session]);
 
   // Track view
   useEffect(() => {
@@ -122,8 +135,33 @@ export default function VideoDetailClient({
     }
   }, [session, video.id, toast]);
 
+  // Qualities that require Pro subscription
+  const PRO_ONLY_QUALITIES = ["original", "fhd", "4k", "uhd"];
+
+  const isQualityLocked = useCallback(
+    (quality: string) => {
+      if (isPro) return false;
+      if (video.isPremium) return true;
+      return PRO_ONLY_QUALITIES.includes(quality);
+    },
+    [isPro, video.isPremium]
+  );
+
   const handleDownload = useCallback(
     async (quality: string) => {
+      // Client-side guard: premium videos need Pro
+      if (video.isPremium && !isPro) {
+        toast("Premium videos require a Pro subscription", "error");
+        window.location.href = "/pricing";
+        return;
+      }
+      // Client-side guard: high-quality needs Pro
+      if (PRO_ONLY_QUALITIES.includes(quality) && !isPro) {
+        toast(`${quality.toUpperCase()} quality requires a Pro subscription`, "error");
+        window.location.href = "/pricing";
+        return;
+      }
+
       setDownloading(quality);
       try {
         const res = await fetch(`/api/internal/videos/${video.id}/download`, {
@@ -132,6 +170,18 @@ export default function VideoDetailClient({
           body: JSON.stringify({ quality }),
         });
         const data = await res.json();
+
+        if (res.status === 401 && data.requiresLogin) {
+          toast("Please sign in to download", "error");
+          window.location.href = "/login";
+          return;
+        }
+        if (res.status === 403 && data.upgradeRequired) {
+          toast(data.message || "Pro subscription required", "error");
+          window.location.href = "/pricing";
+          return;
+        }
+
         if (data.url) {
           const a = document.createElement("a");
           a.href = data.url;
@@ -149,7 +199,7 @@ export default function VideoDetailClient({
       }
       setDownloading(null);
     },
-    [video.id, video.slug, toast]
+    [video.id, video.slug, video.isPremium, isPro, toast]
   );
 
   const handleFollow = useCallback(async () => {
@@ -298,7 +348,18 @@ export default function VideoDetailClient({
               Share
             </button>
             <button
-              onClick={() => handleDownload(bestFile?.quality || "hd")}
+              onClick={() => {
+                if (video.isPremium && !isPro) {
+                  toast("Premium videos require a Pro subscription", "error");
+                  window.location.href = "/pricing";
+                  return;
+                }
+                // Find best free quality for non-Pro
+                const freeQualities = ["sd", "hd"];
+                const bestFreeFile = video.files.filter(f => freeQualities.includes(f.quality)).pop();
+                const defaultQuality = isPro ? (bestFile?.quality || "hd") : (bestFreeFile?.quality || "sd");
+                handleDownload(defaultQuality);
+              }}
               disabled={downloading !== null}
               className="btn btn-md btn-primary"
             >
@@ -309,7 +370,7 @@ export default function VideoDetailClient({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
               )}
-              Free Download
+              {video.isPremium && !isPro ? "⭐ Pro Download" : "Free Download"}
             </button>
           </div>
         </div>
@@ -346,20 +407,37 @@ export default function VideoDetailClient({
             )}
 
             {/* License */}
-            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-              <div className="flex items-center gap-2 text-emerald-800 font-medium text-caption">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Free to use
+            {video.isPremium ? (
+              <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                <div className="flex items-center gap-2 text-amber-800 font-medium text-caption">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Premium Content
+                </div>
+                <p className="text-caption text-amber-700 mt-1">
+                  Pro subscription required.{" "}
+                  <Link href="/pricing" className="underline font-medium">
+                    View plans
+                  </Link>
+                </p>
               </div>
-              <p className="text-caption text-emerald-700 mt-1">
-                No attribution required.{" "}
-                <Link href="/license" className="underline">
-                  Learn more about the license
-                </Link>
-              </p>
-            </div>
+            ) : (
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                <div className="flex items-center gap-2 text-emerald-800 font-medium text-caption">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Free to use
+                </div>
+                <p className="text-caption text-emerald-700 mt-1">
+                  No attribution required. SD & HD free for all.{" "}
+                  <Link href="/license" className="underline">
+                    Learn more about the license
+                  </Link>
+                </p>
+              </div>
+            )}
 
             {/* Report */}
             <div>
@@ -398,41 +476,68 @@ export default function VideoDetailClient({
             {/* Download options */}
             <div className="card p-5 space-y-3">
               <h2 className="text-label text-surface-900">Download</h2>
+              {video.isPremium && !isPro && (
+                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 mb-2">
+                  <p className="text-micro text-amber-800 font-medium">⭐ Premium Video</p>
+                  <p className="text-micro text-amber-700 mt-0.5">
+                    This video requires a Pro subscription.{" "}
+                    <a href="/pricing" className="underline font-medium">Upgrade</a>
+                  </p>
+                </div>
+              )}
               {video.files.length > 0 ? (
-                video.files.map((file) => (
-                  <button
-                    key={file.id}
-                    onClick={() => handleDownload(file.quality)}
-                    disabled={downloading === file.quality}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-50 transition-colors text-caption border border-surface-100"
-                  >
-                    <div className="flex items-center gap-2">
-                      {downloading === file.quality ? (
-                        <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <svg className="w-4 h-4 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                      )}
-                      <span className="text-surface-700 font-medium">
-                        {QUALITY_LABELS[file.quality] || file.quality.toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-surface-500">
-                        {file.width}×{file.height}
-                      </span>
-                      {file.fileSize !== "—" && (
-                        <span className="text-surface-400 ml-2">{file.fileSize}</span>
-                      )}
-                    </div>
-                  </button>
-                ))
+                video.files.map((file) => {
+                  const locked = isQualityLocked(file.quality);
+                  return (
+                    <button
+                      key={file.id}
+                      onClick={() => locked ? (window.location.href = "/pricing") : handleDownload(file.quality)}
+                      disabled={downloading === file.quality}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-caption border ${
+                        locked
+                          ? "border-surface-200 bg-surface-50 opacity-75 hover:bg-surface-100"
+                          : "border-surface-100 hover:bg-surface-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {downloading === file.quality ? (
+                          <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                        ) : locked ? (
+                          <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        )}
+                        <span className={`font-medium ${locked ? "text-surface-500" : "text-surface-700"}`}>
+                          {QUALITY_LABELS[file.quality] || file.quality.toUpperCase()}
+                        </span>
+                        {locked && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold rounded-full">
+                            PRO
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-surface-500">
+                          {file.width}×{file.height}
+                        </span>
+                        {file.fileSize !== "—" && (
+                          <span className="text-surface-400 ml-2">{file.fileSize}</span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })
               ) : (
                 <p className="text-caption text-surface-400">No download files available</p>
               )}
               <p className="text-micro text-surface-400 mt-2">
-                Free for personal and commercial use.
+                {video.isPremium
+                  ? "Premium content — Pro subscription required."
+                  : "SD & HD free for all. FHD+ requires Pro."}
               </p>
             </div>
           </div>
