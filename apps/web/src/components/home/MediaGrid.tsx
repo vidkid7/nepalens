@@ -65,14 +65,18 @@ function VideoCard({ item }: { item: MediaItem }) {
       onMouseLeave={handleMouseLeave}
     >
       {/* Thumbnail */}
-      <img
-        src={item.thumbnailUrl}
-        alt={item.title}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
-          isHovering && isVideoReady ? "opacity-0" : "opacity-100"
-        }`}
-        loading="lazy"
-      />
+      {item.thumbnailUrl ? (
+        <img
+          src={item.thumbnailUrl}
+          alt={item.title}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
+            isHovering && isVideoReady ? "opacity-0" : "opacity-100"
+          }`}
+          loading="lazy"
+        />
+      ) : (
+        <div className={`absolute inset-0 bg-surface-300 ${isHovering && isVideoReady ? "opacity-0" : "opacity-100"}`} />
+      )}
 
       {/* Video preview — src only loads when hovering */}
       {item.videoUrl && (
@@ -133,12 +137,16 @@ function PhotoCard({ item }: { item: MediaItem }) {
       href={`/photo/${item.slug}-${item.id}`}
       className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-surface-200 block shadow-sm hover:shadow-xl transition-shadow duration-300"
     >
-      <img
-        src={item.thumbnailUrl}
-        alt={item.title}
-        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-        loading="lazy"
-      />
+      {item.thumbnailUrl ? (
+        <img
+          src={item.thumbnailUrl}
+          alt={item.title}
+          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-full bg-surface-300" />
+      )}
 
       {item.isPremium && (
         <div className="absolute top-3 left-3 z-10">
