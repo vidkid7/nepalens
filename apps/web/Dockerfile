@@ -26,13 +26,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
+# Generate Prisma client (use local installed version, not npx which pulls latest)
+RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma
 
 # Build all packages then the web app
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DOCKER_BUILD=1
-RUN npx turbo build --filter=@nepalens/web
+RUN ./node_modules/.bin/turbo build --filter=@nepalens/web
 
 # ── Stage 3: Production runner ──
 FROM node:20-alpine AS runner

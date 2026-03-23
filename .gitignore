@@ -45,3 +45,7 @@ elasticsearch_data/
 
 stock videos/
 stock imges/
+
+# Database dumps
+nepalens_backup.dump
+*.dump
