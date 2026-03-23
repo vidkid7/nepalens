@@ -672,9 +672,9 @@ function UserResults({
                   </p>
                 )}
                 <div className="flex items-center gap-3 mt-2 text-micro text-surface-400">
-                  <span>{user.followersCount.toLocaleString()} followers</span>
-                  <span>{user.photosCount} photos</span>
-                  {user.videosCount > 0 && <span>{user.videosCount} videos</span>}
+                  <span>{(user.followersCount ?? 0).toLocaleString()} followers</span>
+                  <span>{user.photosCount ?? 0} photos</span>
+                  {(user.videosCount ?? 0) > 0 && <span>{user.videosCount} videos</span>}
                 </div>
               </div>
             </Link>
