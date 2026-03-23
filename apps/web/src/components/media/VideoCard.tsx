@@ -166,9 +166,9 @@ export default function VideoCard({ video }: VideoCardProps) {
             ⭐ Pro
           </span>
         )}
-        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm text-white shadow-lg">
-          <svg className="w-3 h-3 ml-px" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z" />
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-white/25 to-white/10 backdrop-blur-md ring-1 ring-white/30 text-white shadow-lg transition-transform duration-200 group-hover:scale-110">
+          <svg className="w-3.5 h-3.5 ml-[1px]" viewBox="0 0 16 16" fill="none">
+            <path d="M4.5 2.8C4.5 2.3 5.1 2 5.5 2.3l7.2 5.2c.4.3.4.8 0 1l-7.2 5.2c-.4.3-1 0-1-.5V2.8z" fill="currentColor" />
           </svg>
         </span>
       </div>
