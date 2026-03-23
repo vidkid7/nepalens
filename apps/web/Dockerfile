@@ -16,10 +16,8 @@ COPY packages/search/package.json ./packages/search/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY packages/storage/package.json ./packages/storage/package.json
 
-# Copy prisma schema so postinstall can generate client
-COPY packages/database/prisma/schema.prisma ./packages/database/prisma/schema.prisma
-
-RUN npm ci
+# Skip postinstall scripts (redis-memory-server tries to compile Redis)
+RUN npm ci --ignore-scripts
 
 # ── Stage 2: Build ──
 FROM node:20-alpine AS builder
@@ -27,16 +25,15 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/database/node_modules ./packages/database/node_modules
 COPY . .
 
-# Regenerate Prisma client with full source
-RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma
+# Generate Prisma client (invoke directly via node — avoids symlink issues)
+RUN node node_modules/prisma/build/index.js generate --schema=packages/database/prisma/schema.prisma
 
 # Build all packages then the web app
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DOCKER_BUILD=1
-RUN ./node_modules/.bin/turbo build --filter=@nepalens/web
+RUN node node_modules/turbo/bin/turbo build --filter=@nepalens/web
 
 # ── Stage 3: Production runner ──
 FROM node:20-alpine AS runner
