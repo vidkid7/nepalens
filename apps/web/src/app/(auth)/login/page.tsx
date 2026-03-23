@@ -21,6 +21,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const expired = searchParams.get("expired") === "1";
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -82,6 +83,14 @@ function LoginForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {expired && !error && (
+              <div className="p-3 bg-amber-50 text-amber-700 text-caption rounded-xl flex items-center gap-2">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Your session has expired. Please sign in again.
+              </div>
+            )}
             {error && (
               <div className="p-3 bg-danger-50 text-danger-600 text-caption rounded-xl flex items-center gap-2">
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

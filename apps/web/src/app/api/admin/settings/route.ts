@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 import { invalidateAll, isRedisConnected } from "@/lib/cache";
+import { cleanupExpiredTokens } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
 
@@ -55,16 +56,17 @@ export async function POST(request: NextRequest) {
   switch (action) {
     case "clear-caches": {
       await invalidateAll();
+      const tokensCleaned = await cleanupExpiredTokens().catch(() => 0);
 
       await logAuditEvent({
         userId: adminUserId,
         action: "settings.clear_caches",
         targetType: "system",
         targetId: "all",
-        details: { note: "All caches cleared" },
+        details: { note: "All caches cleared", expiredTokensCleaned: tokensCleaned },
       });
 
-      return NextResponse.json({ message: "All caches cleared" });
+      return NextResponse.json({ message: `All caches cleared, ${tokensCleaned} expired tokens cleaned` });
     }
 
     case "reprocess-failed": {

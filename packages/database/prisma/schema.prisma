@@ -49,6 +49,7 @@ model User {
   moderationDecisions ModerationDecision[] @relation("moderationDecisions")
   roles               UserRole[]
   subscriptions       Subscription[]
+  refreshTokens       RefreshToken[]
 
   @@map("users")
 }
@@ -603,6 +604,29 @@ model FeaturedTopic {
   createdAt   DateTime @default(now())
 
   @@map("featured_topics")
+}
+
+// =============================================
+// REFRESH TOKENS
+// =============================================
+model RefreshToken {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  family     String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
+  ipAddress  String?
+  userAgent  String?  @db.VarChar(500)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([family])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 // =============================================

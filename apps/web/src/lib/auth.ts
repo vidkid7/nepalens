@@ -3,6 +3,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@nepalens/database";
 import crypto from "crypto";
+import {
+  ACCESS_TOKEN_MAX_AGE,
+  createRefreshToken,
+  rotateRefreshToken,
+  revokeRefreshToken,
+} from "./tokens";
 
 async function verifyPassword(
   password: string,
@@ -25,7 +31,7 @@ export const authOptions: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials.password) return null;
 
         const user = await prisma.user.findUnique({
@@ -43,11 +49,21 @@ export const authOptions: AuthOptions = {
           data: { lastLoginAt: new Date() },
         });
 
+        // Create refresh token on login
+        const ip = req?.headers?.["x-forwarded-for"] as string | undefined;
+        const ua = req?.headers?.["user-agent"] as string | undefined;
+        const { rawToken, family } = await createRefreshToken(user.id, undefined, {
+          ipAddress: ip,
+          userAgent: ua,
+        });
+
         return {
           id: user.id,
           email: user.email,
           name: user.displayName || user.username,
           image: user.avatarUrl,
+          refreshToken: rawToken,
+          refreshTokenFamily: family,
         };
       },
     }),
@@ -63,7 +79,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        const existing = await prisma.user.findUnique({
+        let existing = await prisma.user.findUnique({
           where: { email: user.email! },
         });
         if (!existing) {
@@ -73,7 +89,7 @@ export const authOptions: AuthOptions = {
           while (await prisma.user.findUnique({ where: { username: uniqueUsername } })) {
             uniqueUsername = `${username}${counter++}`;
           }
-          await prisma.user.create({
+          existing = await prisma.user.create({
             data: {
               email: user.email!,
               username: uniqueUsername,
@@ -85,10 +101,16 @@ export const authOptions: AuthOptions = {
             },
           });
         }
+        // Create refresh token for Google OAuth users too
+        const { rawToken, family } = await createRefreshToken(existing.id);
+        (user as any).refreshToken = rawToken;
+        (user as any).refreshTokenFamily = family;
       }
       return true;
     },
-    async jwt({ token, user }) {
+
+    async jwt({ token, user, trigger }) {
+      // Initial sign-in — populate token with user data + refresh token
       if (user) {
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email! },
@@ -100,9 +122,49 @@ export const authOptions: AuthOptions = {
           token.isAdmin = dbUser.isAdmin;
           token.isContributor = dbUser.isContributor;
         }
+        token.refreshToken = (user as any).refreshToken;
+        token.refreshTokenFamily = (user as any).refreshTokenFamily;
+        token.accessTokenExpires = Date.now() + ACCESS_TOKEN_MAX_AGE * 1000;
+        return token;
       }
+
+      // Subsequent requests — check if access token is still valid
+      if (typeof token.accessTokenExpires === "number" && Date.now() < token.accessTokenExpires) {
+        return token;
+      }
+
+      // Access token expired — try to rotate the refresh token
+      if (token.refreshToken && typeof token.refreshToken === "string") {
+        try {
+          const result = await rotateRefreshToken(token.refreshToken);
+          if (result) {
+            // Refresh user data from DB (roles may have changed)
+            const freshUser = await prisma.user.findUnique({
+              where: { id: result.userId },
+              select: { id: true, username: true, isAdmin: true, isContributor: true, isBanned: true },
+            });
+
+            if (freshUser && !freshUser.isBanned) {
+              token.userId = freshUser.id;
+              token.username = freshUser.username;
+              token.isAdmin = freshUser.isAdmin;
+              token.isContributor = freshUser.isContributor;
+              token.refreshToken = result.rawToken;
+              token.refreshTokenFamily = result.family;
+              token.accessTokenExpires = Date.now() + ACCESS_TOKEN_MAX_AGE * 1000;
+              return token;
+            }
+          }
+        } catch {
+          // Refresh failed — fall through to expire
+        }
+      }
+
+      // Refresh failed — mark token as expired so client re-authenticates
+      token.error = "RefreshTokenExpired";
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.userId;
@@ -110,16 +172,29 @@ export const authOptions: AuthOptions = {
         (session.user as any).isAdmin = token.isAdmin;
         (session.user as any).isContributor = token.isContributor;
       }
+      // Expose token error to client so it can force re-login
+      (session as any).error = token.error;
       return session;
     },
   },
+
+  events: {
+    async signOut(message) {
+      // Revoke refresh token on explicit sign-out
+      const token = (message as any).token;
+      if (token?.refreshToken && typeof token.refreshToken === "string") {
+        await revokeRefreshToken(token.refreshToken).catch(() => {});
+      }
+    },
+  },
+
   pages: {
     signIn: "/login",
     error: "/login",
   },
   session: {
     strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: 30 * 24 * 60 * 60, // 30 days — outer container; real expiry managed by accessTokenExpires
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

@@ -3,6 +3,7 @@ import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
+import { revokeAllUserTokens } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
 
@@ -179,6 +180,11 @@ export async function PATCH(
       },
     },
   });
+
+  // Revoke all refresh tokens when banning or removing admin
+  if (action === "ban" || action === "remove-admin") {
+    await revokeAllUserTokens(id).catch(() => {});
+  }
 
   await logAuditEvent({
     userId: adminUserId,
