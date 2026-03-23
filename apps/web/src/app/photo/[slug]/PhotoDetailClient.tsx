@@ -138,9 +138,11 @@ export default function PhotoDetailClient({
     src: {
       large: p.isPremium
         ? `/api/internal/photos/${p.id}/preview?w=1200`
-        : p.cdnKey
-          ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${p.cdnKey}`
-          : p.originalUrl || `https://placehold.co/600x400/264653/fff?text=Photo`,
+        : p.originalUrl && p.originalUrl.startsWith("http")
+          ? p.originalUrl
+          : p.cdnKey
+            ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${p.cdnKey}`
+            : p.originalUrl || `https://placehold.co/600x400/264653/fff?text=Photo`,
     },
     photographer: p.user?.displayName || "Photographer",
     photographer_url: `/profile/${p.user?.username || "user"}`,

@@ -68,8 +68,18 @@ export async function GET(
     // --- Resolve the original image bytes ---
     let imageBuffer: Buffer;
 
-    if (photo.cdnKey) {
-      // Uploaded photo stored in MinIO/S3
+    if (photo.originalUrl && photo.originalUrl.startsWith("http")) {
+      // Cloudinary or external URL — fetch directly
+      const res = await fetch(photo.originalUrl);
+      if (!res.ok) {
+        return NextResponse.json(
+          { error: `Failed to fetch original (${res.status})` },
+          { status: 502 }
+        );
+      }
+      imageBuffer = Buffer.from(await res.arrayBuffer());
+    } else if (photo.cdnKey) {
+      // Legacy: MinIO/S3 path via CDN base
       const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
       const fileUrl = `${cdnBase}/${photo.cdnKey}`;
       const res = await fetch(fileUrl);
@@ -81,27 +91,15 @@ export async function GET(
       }
       imageBuffer = Buffer.from(await res.arrayBuffer());
     } else if (photo.originalUrl) {
-      if (photo.originalUrl.startsWith("http")) {
-        // External URL
-        const res = await fetch(photo.originalUrl);
-        if (!res.ok) {
-          return NextResponse.json(
-            { error: `Failed to fetch original (${res.status})` },
-            { status: 502 }
-          );
-        }
-        imageBuffer = Buffer.from(await res.arrayBuffer());
-      } else {
-        // Local file in public/ directory (seeded stock images)
-        const localPath = path.join(process.cwd(), "public", photo.originalUrl);
-        try {
-          imageBuffer = Buffer.from(await fs.readFile(localPath));
-        } catch {
-          return NextResponse.json(
-            { error: "Original file not found on disk" },
-            { status: 404 }
-          );
-        }
+      // Local file in public/ directory (seeded stock images)
+      const localPath = path.join(process.cwd(), "public", photo.originalUrl);
+      try {
+        imageBuffer = Buffer.from(await fs.readFile(localPath));
+      } catch {
+        return NextResponse.json(
+          { error: "Original file not found on disk" },
+          { status: 404 }
+        );
       }
     } else {
       return NextResponse.json({ error: "No source file available" }, { status: 404 });

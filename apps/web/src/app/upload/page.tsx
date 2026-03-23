@@ -244,7 +244,7 @@ export default function UploadPage() {
       updateFile(i, { status: "uploading", progress: 10 });
 
       try {
-        // Step 1: Get presigned URL
+        // Step 1: Get Cloudinary upload params
         const presignRes = await fetch("/api/internal/upload/presign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -255,15 +255,31 @@ export default function UploadPage() {
         });
 
         if (!presignRes.ok) throw new Error("Failed to get upload URL");
-        const { key, url } = await presignRes.json();
+        const { key, url, signature, timestamp, apiKey, folder, publicId } = await presignRes.json();
         updateFile(i, { progress: 30 });
 
-        // Step 2: Upload to S3
-        await fetch(url, {
-          method: "PUT",
-          body: files[i].file,
-          headers: { "Content-Type": files[i].file.type },
+        // Step 2: Upload to Cloudinary
+        const formData = new FormData();
+        formData.append("file", files[i].file);
+        formData.append("api_key", apiKey);
+        formData.append("timestamp", String(timestamp));
+        formData.append("signature", signature);
+        formData.append("folder", folder);
+        formData.append("public_id", publicId);
+        formData.append("overwrite", "true");
+
+        const uploadRes = await fetch(url, {
+          method: "POST",
+          body: formData,
         });
+
+        if (!uploadRes.ok) {
+          const errText = await uploadRes.text().catch(() => "");
+          throw new Error(`Upload to cloud storage failed: ${errText}`);
+        }
+
+        const cloudResult = await uploadRes.json();
+        const cloudinaryUrl = cloudResult.secure_url;
         updateFile(i, { progress: 70, status: "processing" });
 
         // Step 3: Create media record (photo or video)
@@ -274,6 +290,7 @@ export default function UploadPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             s3Key: key,
+            cloudinaryUrl,
             title: files[i].title,
             description: files[i].description,
             altText: files[i].altText,

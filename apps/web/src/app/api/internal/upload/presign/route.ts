@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getPresignedUploadUrl } from "@pixelstock/storage";
+import { getCloudinaryUploadParams } from "@pixelstock/storage";
 import { v4 as uuid } from "uuid";
 
-// POST /api/internal/upload/presign — Get presigned S3 URL
+// POST /api/internal/upload/presign — Get Cloudinary upload params
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -22,11 +22,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid content type. Only images and videos are allowed." }, { status: 400 });
   }
 
-  const ext = filename?.split(".").pop() || (isVideo ? "mp4" : "jpg");
   const mediaType = isVideo ? "videos" : "uploads";
-  const key = `${mediaType}/original/${userId}/${uuid()}.${ext}`;
+  const folder = `${mediaType}/original/${userId}`;
+  const publicId = uuid();
+  const resourceType = isVideo ? "video" : "image";
 
-  const url = await getPresignedUploadUrl(key, contentType);
+  const params = getCloudinaryUploadParams(folder, publicId, resourceType as "image" | "video");
 
-  return NextResponse.json({ key, url });
+  return NextResponse.json({
+    key: `${folder}/${publicId}`,
+    ...params,
+  });
 }

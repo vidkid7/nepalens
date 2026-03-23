@@ -112,9 +112,11 @@ export default async function ChallengeDetailPage({ params }: Props) {
       slug: s.slug,
       altText: s.altText,
       originalUrl: s.originalUrl,
-      thumbnailUrl: s.cdnKey
-        ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/photos/${s.id}/small.jpg`
-        : s.originalUrl,
+      thumbnailUrl: s.originalUrl && s.originalUrl.startsWith("http")
+        ? s.originalUrl
+        : s.cdnKey
+          ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${s.cdnKey}`
+          : s.originalUrl,
       width: s.width,
       height: s.height,
       dominantColor: s.dominantColor,
@@ -128,9 +130,11 @@ export default async function ChallengeDetailPage({ params }: Props) {
           slug: winner.slug,
           altText: winner.altText,
           originalUrl: winner.originalUrl,
-          thumbnailUrl: (winner as any).cdnKey
-            ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/photos/${winner.id}/small.jpg`
-            : winner.originalUrl,
+          thumbnailUrl: winner.originalUrl && winner.originalUrl.startsWith("http")
+            ? winner.originalUrl
+            : (winner as any).cdnKey
+              ? `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${(winner as any).cdnKey}`
+              : winner.originalUrl,
           width: winner.width,
           height: winner.height,
           dominantColor: winner.dominantColor,

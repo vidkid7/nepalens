@@ -66,9 +66,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const topPhotoUrl = topPhoto
     ? topPhoto.isPremium
       ? `/api/internal/photos/${topPhoto.id}/preview?w=1200`
-      : topPhoto.cdnKey
-        ? `${cdnBase}/${topPhoto.cdnKey}`
-        : topPhoto.originalUrl
+      : topPhoto.originalUrl && topPhoto.originalUrl.startsWith("http")
+        ? topPhoto.originalUrl
+        : topPhoto.cdnKey
+          ? `${cdnBase}/${topPhoto.cdnKey}`
+          : topPhoto.originalUrl
     : null;
 
   return (
@@ -105,9 +107,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         src: {
           large: p.isPremium
             ? `/api/internal/photos/${p.id}/preview?w=1200`
-            : p.cdnKey
-              ? `${cdnBase}/${p.cdnKey}`
-              : p.originalUrl,
+            : p.originalUrl && p.originalUrl.startsWith("http")
+              ? p.originalUrl
+              : p.cdnKey
+                ? `${cdnBase}/${p.cdnKey}`
+                : p.originalUrl,
         },
         photographer: user.displayName || user.username,
         photographer_url: `/profile/${user.username}`,

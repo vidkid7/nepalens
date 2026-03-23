@@ -64,9 +64,11 @@ export async function generateMetadata({ params }: PhotoPageProps): Promise<Meta
       images: [{
         url: photo.isPremium
           ? `/api/internal/photos/${photo.id}/preview?w=1200`
-          : photo.cdnKey
-            ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
-            : photo.originalUrl || '',
+          : photo.originalUrl && photo.originalUrl.startsWith("http")
+            ? photo.originalUrl
+            : photo.cdnKey
+              ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
+              : photo.originalUrl || '',
         width: photo.width,
         height: photo.height,
       }],
@@ -88,9 +90,11 @@ export default async function PhotoDetailPage({ params }: PhotoPageProps) {
         title: photo.altText || photo.description || fallbackTitle || "Untitled",
         src: photo.isPremium
           ? `/api/internal/photos/${photo.id}/preview?w=1920`
-          : photo.cdnKey
-            ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
-            : photo.originalUrl || `https://placehold.co/1200x800/264653/ffffff?text=${encodeURIComponent(fallbackTitle || "Photo")}`,
+          : photo.originalUrl && photo.originalUrl.startsWith("http")
+            ? photo.originalUrl
+            : photo.cdnKey
+              ? `${process.env.NEXT_PUBLIC_CDN_URL}/${photo.cdnKey}`
+              : photo.originalUrl || `https://placehold.co/1200x800/264653/ffffff?text=${encodeURIComponent(fallbackTitle || "Photo")}`,
         width: photo.width,
         height: photo.height,
         isPremium: photo.isPremium,

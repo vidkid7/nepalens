@@ -41,11 +41,12 @@ export async function GET(request: NextRequest) {
       .map((d) => {
         const p = d.photo!;
         const isPremium = p.isPremium || false;
+        const rawUrl = p.originalUrl && p.originalUrl.startsWith("http")
+          ? p.originalUrl
+          : p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl;
         const src = isPremium
           ? `/api/internal/photos/${p.id}/preview?w=1200`
-          : p.cdnKey
-            ? `${cdnBase}/${p.cdnKey}`
-            : p.originalUrl;
+          : rawUrl;
         const photographer =
           p.user?.displayName || p.user?.username || "Unknown";
         const photographerUrl = p.user?.username

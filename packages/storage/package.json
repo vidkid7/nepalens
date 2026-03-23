@@ -9,8 +9,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.490.0",
-    "@aws-sdk/s3-request-presigner": "^3.490.0"
+    "cloudinary": "^2.9.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

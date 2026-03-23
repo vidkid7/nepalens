@@ -18,6 +18,10 @@ function getPhotoUrl(
   if (photo.isPremium) {
     return `/api/internal/photos/${photo.id}/preview?w=800`;
   }
+  // Prefer full URL (Cloudinary), fall back to CDN base + key
+  if (photo.originalUrl && photo.originalUrl.startsWith("http")) {
+    return photo.originalUrl;
+  }
   const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
   return photo.cdnKey
     ? `${cdnBase}/${photo.cdnKey}`

@@ -250,6 +250,7 @@ export default function ChallengeDetailClient({
     : "";
 
   function getPhotoThumb(photo: UserPhoto) {
+    if (photo.originalUrl && photo.originalUrl.startsWith("http")) return photo.originalUrl;
     if (photo.cdnKey) return `${cdnBase}/${photo.cdnKey}`;
     return photo.originalUrl;
   }

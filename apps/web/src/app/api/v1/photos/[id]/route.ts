@@ -25,9 +25,12 @@ export async function GET(
 
   const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
   const isPremium = photo.isPremium || false;
+  const rawUrl = photo.originalUrl && photo.originalUrl.startsWith("http")
+    ? photo.originalUrl
+    : photo.cdnKey ? `${cdnBase}/${photo.cdnKey}` : photo.originalUrl;
   const displayUrl = isPremium
     ? `/api/internal/photos/${photo.id}/preview?w=1200`
-    : photo.cdnKey ? `${cdnBase}/${photo.cdnKey}` : photo.originalUrl;
+    : rawUrl;
   const smallUrl = isPremium
     ? `/api/internal/photos/${photo.id}/preview?w=640`
     : displayUrl;

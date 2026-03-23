@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { s3Key, title, description, altText, category, tags, location, challengeId, isPremium, width, height } = body;
+  const { s3Key, cloudinaryUrl, title, description, altText, category, tags, location, challengeId, isPremium, width, height } = body;
 
   if (!s3Key || !title) {
     return NextResponse.json({ error: "s3Key and title are required" }, { status: 400 });
@@ -161,8 +161,8 @@ export async function POST(request: NextRequest) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 
-  const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
-  const originalUrl = `${cdnBase}/${s3Key}`;
+  // Use cloudinaryUrl if provided, otherwise fall back to CDN_URL + s3Key
+  const originalUrl = cloudinaryUrl || `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${s3Key}`;
 
   // Determine orientation from dimensions
   const w = typeof width === "number" && width > 0 ? width : 0;
@@ -317,11 +317,15 @@ function formatPhoto(
 
   // For premium images, use the auth proxy so raw CDN URL is never exposed
   // to non-Pro users. The proxy bakes watermarks server-side.
-  const displayUrl = isPremium
-    ? `/api/internal/photos/${p.id}/preview?w=1200`
+  const rawUrl = p.originalUrl && p.originalUrl.startsWith("http")
+    ? p.originalUrl
     : p.cdnKey
       ? `${cdnBase}/${p.cdnKey}`
       : p.originalUrl;
+
+  const displayUrl = isPremium
+    ? `/api/internal/photos/${p.id}/preview?w=1200`
+    : rawUrl;
 
   const smallUrl = isPremium
     ? `/api/internal/photos/${p.id}/preview?w=640`

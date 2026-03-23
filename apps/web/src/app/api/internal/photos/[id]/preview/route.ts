@@ -46,7 +46,14 @@ export async function GET(
 
     // Fetch original image bytes
     let imageBuffer: Buffer;
-    if (photo.cdnKey) {
+    if (photo.originalUrl && photo.originalUrl.startsWith("http")) {
+      // Cloudinary or external URL — fetch directly
+      const res = await fetch(photo.originalUrl);
+      if (!res.ok) {
+        return NextResponse.json({ error: "Source unavailable" }, { status: 502 });
+      }
+      imageBuffer = Buffer.from(await res.arrayBuffer());
+    } else if (photo.cdnKey) {
       const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
       const fileUrl = `${cdnBase}/${photo.cdnKey}`;
       const res = await fetch(fileUrl);
@@ -55,19 +62,11 @@ export async function GET(
       }
       imageBuffer = Buffer.from(await res.arrayBuffer());
     } else if (photo.originalUrl) {
-      if (photo.originalUrl.startsWith("http")) {
-        const res = await fetch(photo.originalUrl);
-        if (!res.ok) {
-          return NextResponse.json({ error: "Source unavailable" }, { status: 502 });
-        }
-        imageBuffer = Buffer.from(await res.arrayBuffer());
-      } else {
-        const localPath = path.join(process.cwd(), "public", photo.originalUrl);
-        try {
-          imageBuffer = Buffer.from(await fs.readFile(localPath));
-        } catch {
-          return NextResponse.json({ error: "File not found" }, { status: 404 });
-        }
+      const localPath = path.join(process.cwd(), "public", photo.originalUrl);
+      try {
+        imageBuffer = Buffer.from(await fs.readFile(localPath));
+      } catch {
+        return NextResponse.json({ error: "File not found" }, { status: 404 });
       }
     } else {
       return NextResponse.json({ error: "No source" }, { status: 404 });

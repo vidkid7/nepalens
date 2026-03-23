@@ -60,9 +60,12 @@ export async function GET(request: NextRequest) {
       const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
       const formatted = photos.map((p) => {
         const isPremium = p.isPremium || false;
+        const rawUrl = p.originalUrl && p.originalUrl.startsWith("http")
+          ? p.originalUrl
+          : p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl;
         const displayUrl = isPremium
           ? `/api/internal/photos/${p.id}/preview?w=1200`
-          : p.cdnKey ? `${cdnBase}/${p.cdnKey}` : p.originalUrl;
+          : rawUrl;
         const smallUrl = isPremium
           ? `/api/internal/photos/${p.id}/preview?w=640`
           : displayUrl;
