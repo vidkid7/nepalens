@@ -7,9 +7,10 @@ interface SearchBarProps {
   compact?: boolean;
   defaultValue?: string;
   autoFocus?: boolean;
+  variant?: "default" | "hero";
 }
 
-export default function SearchBar({ compact, defaultValue = "", autoFocus }: SearchBarProps) {
+export default function SearchBar({ compact, defaultValue = "", autoFocus, variant = "default" }: SearchBarProps) {
   const [query, setQuery] = useState(defaultValue);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -127,6 +128,8 @@ export default function SearchBar({ compact, defaultValue = "", autoFocus }: Sea
     );
   }
 
+  const heroInput = variant === "hero";
+
   return (
     <div ref={wrapperRef} className="relative w-full max-w-3xl">
       <form onSubmit={handleSubmit}>
@@ -139,7 +142,11 @@ export default function SearchBar({ compact, defaultValue = "", autoFocus }: Sea
           onKeyDown={handleKeyDown}
           placeholder="Search for free photos and videos"
           autoFocus={autoFocus}
-          className="w-full h-14 sm:h-16 pl-6 pr-16 bg-surface-50 border border-surface-200 rounded-2xl text-body sm:text-subtitle text-surface-900 placeholder-surface-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand/40 focus:bg-white transition-all"
+          className={`w-full h-14 sm:h-16 pl-6 pr-16 rounded-2xl text-body sm:text-subtitle transition-all focus:outline-none ${
+            heroInput
+              ? "bg-white/95 backdrop-blur-md text-surface-900 placeholder-surface-400 shadow-2xl focus:ring-4 focus:ring-white/30 focus:bg-white"
+              : "bg-surface-50 border border-surface-200 text-surface-900 placeholder-surface-400 shadow-sm focus:ring-2 focus:ring-brand/20 focus:border-brand/40 focus:bg-white"
+          }`}
           aria-label="Search"
           role="combobox"
           aria-expanded={showSuggestions && suggestions.length > 0}

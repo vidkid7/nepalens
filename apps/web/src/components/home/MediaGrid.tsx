@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 
 export interface MediaItem {
@@ -28,17 +28,13 @@ function VideoCard({ item }: { item: MediaItem }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
-  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = useCallback(() => {
     hoverTimer.current = setTimeout(() => {
       setIsHovering(true);
-      if (videoRef.current && item.videoUrl) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(() => {});
-      }
-    }, 300);
-  }, [item.videoUrl]);
+    }, 250);
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     if (hoverTimer.current) {
@@ -53,10 +49,18 @@ function VideoCard({ item }: { item: MediaItem }) {
     }
   }, []);
 
+  // Auto-play when hovering and video is ready
+  useEffect(() => {
+    if (isHovering && isVideoReady && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [isHovering, isVideoReady]);
+
   return (
     <Link
       href={`/video/${item.slug}-${item.id}`}
-      className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-surface-100 block"
+      className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-surface-200 block shadow-sm hover:shadow-xl transition-shadow duration-300"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -64,13 +68,13 @@ function VideoCard({ item }: { item: MediaItem }) {
       <img
         src={item.thumbnailUrl}
         alt={item.title}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
           isHovering && isVideoReady ? "opacity-0" : "opacity-100"
         }`}
         loading="lazy"
       />
 
-      {/* Video preview on hover — only loads src when hovering */}
+      {/* Video preview — src only loads when hovering */}
       {item.videoUrl && (
         <video
           ref={videoRef}
@@ -86,20 +90,16 @@ function VideoCard({ item }: { item: MediaItem }) {
         />
       )}
 
-      {/* Video indicator badge */}
-      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-        <span className="flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-0.5 rounded-md">
-          <svg
-            className="w-3 h-3"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
+      {/* Top-left badges */}
+      <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+        <span className="flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
             <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
           </svg>
           VIDEO
         </span>
         {item.isPremium && (
-          <span className="bg-amber-500/90 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-0.5 rounded-md">
+          <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">
             Pro
           </span>
         )}
@@ -107,19 +107,19 @@ function VideoCard({ item }: { item: MediaItem }) {
 
       {/* Duration badge */}
       {item.duration != null && item.duration > 0 && (
-        <div className="absolute top-2.5 right-2.5">
-          <span className="bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-0.5 rounded-md">
+        <div className="absolute top-3 right-3 z-10">
+          <span className="bg-black/50 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-1 rounded-lg">
             {formatDuration(item.duration)}
           </span>
         </div>
       )}
 
       {/* Hover overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-      {/* Photographer name */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <p className="text-caption font-medium text-white truncate">
+      {/* Photographer */}
+      <div className="absolute bottom-0 left-0 right-0 p-3.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+        <p className="text-sm font-medium text-white truncate drop-shadow-sm">
           {item.photographer}
         </p>
       </div>
@@ -131,25 +131,26 @@ function PhotoCard({ item }: { item: MediaItem }) {
   return (
     <Link
       href={`/photo/${item.slug}-${item.id}`}
-      className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-surface-100 block"
+      className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-surface-200 block shadow-sm hover:shadow-xl transition-shadow duration-300"
     >
       <img
         src={item.thumbnailUrl}
         alt={item.title}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+        loading="lazy"
       />
 
       {item.isPremium && (
-        <div className="absolute top-2.5 left-2.5">
-          <span className="bg-amber-500/90 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-0.5 rounded-md">
+        <div className="absolute top-3 left-3 z-10">
+          <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">
             Pro
           </span>
         </div>
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <p className="text-caption font-medium text-white truncate">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute bottom-0 left-0 right-0 p-3.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+        <p className="text-sm font-medium text-white truncate drop-shadow-sm">
           {item.photographer}
         </p>
       </div>
@@ -165,7 +166,7 @@ export default function MediaGrid({ items }: MediaGridProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
       {items.map((item) =>
         item.type === "video" ? (
           <VideoCard key={`v-${item.id}`} item={item} />

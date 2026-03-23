@@ -29,8 +29,7 @@ function getPhotoUrl(
 
 function getVideoThumbnail(thumbnailUrl: string | null): string {
   if (!thumbnailUrl) return "";
-  // Convert Cloudinary video URL to a JPG thumbnail
-  if (thumbnailUrl.includes("/video/upload/")) {
+  if (thumbnailUrl.includes("/video/upload/") && !thumbnailUrl.includes("so_0")) {
     return thumbnailUrl
       .replace("/video/upload/", "/video/upload/so_0,w_640,c_limit,q_auto,f_jpg/")
       .replace(/\.[^.]+$/, ".jpg");
@@ -40,42 +39,44 @@ function getVideoThumbnail(thumbnailUrl: string | null): string {
 
 /* ─── data fetching ─── */
 
-async function getFeaturedCollections() {
-  return cached("home:collections", CacheTTL.HOME, async () => {
+async function getHeroPhotos() {
+  return cached("home:hero:v3", CacheTTL.HOME, async () => {
     try {
-      return await prisma.collection.findMany({
-        where: { isPrivate: false },
-        take: 2,
-        orderBy: { updatedAt: "desc" },
-        include: {
-          _count: { select: { items: true } },
-          user: { select: { username: true, displayName: true } },
-          items: {
-            take: 1,
-            orderBy: { position: "asc" },
-            where: { mediaType: "photo" },
-            include: {
-              photo: {
-                select: {
-                  id: true,
-                  cdnKey: true,
-                  originalUrl: true,
-                  dominantColor: true,
-                  isPremium: true,
-                },
-              },
-            },
-          },
-        },
+      // Prefer non-premium landscape photos for the hero
+      const photos = await prisma.photo.findMany({
+        where: { status: "approved", isPremium: false, width: { gte: 3000 } },
+        take: 5,
+        orderBy: { viewsCount: "desc" },
+        select: { id: true, cdnKey: true, originalUrl: true, altText: true, isPremium: true },
       });
+      return photos.map((p) => ({
+        url: getPhotoUrl(p),
+        alt: p.altText || "Featured photo",
+      }));
     } catch {
       return [];
     }
   });
 }
 
+async function getStats() {
+  return cached("home:stats", CacheTTL.HOME, async () => {
+    try {
+      const [photoCount, videoCount, userCount, downloadCount] = await Promise.all([
+        prisma.photo.count({ where: { status: "approved" } }),
+        prisma.video.count({ where: { status: "approved" } }),
+        prisma.user.count(),
+        prisma.download.count(),
+      ]);
+      return { photos: photoCount, videos: videoCount, creators: userCount, downloads: downloadCount };
+    } catch {
+      return { photos: 0, videos: 0, creators: 0, downloads: 0 };
+    }
+  });
+}
+
 async function getCuratedMedia(): Promise<MediaItem[]> {
-  return cached("home:curated:media", CacheTTL.HOME, async () => {
+  return cached("home:curated:v2", CacheTTL.HOME, async () => {
     try {
       const [photos, videos] = await Promise.all([
         prisma.photo.findMany({
@@ -86,7 +87,7 @@ async function getCuratedMedia(): Promise<MediaItem[]> {
         }),
         prisma.video.findMany({
           where: { status: "approved" },
-          take: 2,
+          take: 3,
           orderBy: { createdAt: "desc" },
           include: {
             user: { select: { username: true, displayName: true } },
@@ -95,46 +96,47 @@ async function getCuratedMedia(): Promise<MediaItem[]> {
         }),
       ]);
 
-      const photoItems: MediaItem[] = photos.map((p) => ({
-        id: p.id,
-        type: "photo" as const,
-        slug: p.slug,
-        title: p.altText || "Photo",
-        thumbnailUrl: getPhotoUrl(p),
-        width: p.width,
-        height: p.height,
-        isPremium: p.isPremium,
-        photographer: p.user.displayName || p.user.username,
-        photographerUrl: `/profile/${p.user.username}`,
-      }));
+      const items: MediaItem[] = [
+        ...photos.map((p) => ({
+          id: p.id,
+          type: "photo" as const,
+          slug: p.slug,
+          title: p.altText || "Photo",
+          thumbnailUrl: getPhotoUrl(p),
+          width: p.width,
+          height: p.height,
+          isPremium: p.isPremium,
+          photographer: p.user.displayName || p.user.username,
+          photographerUrl: `/profile/${p.user.username}`,
+        })),
+        ...videos.map((v) => ({
+          id: v.id,
+          type: "video" as const,
+          slug: v.slug,
+          title: v.altText || "Video",
+          thumbnailUrl: getVideoThumbnail(v.thumbnailUrl),
+          videoUrl: v.files[0]?.cdnUrl || null,
+          width: v.width,
+          height: v.height,
+          duration: v.durationSeconds,
+          isPremium: v.isPremium,
+          photographer: v.user.displayName || v.user.username,
+          photographerUrl: `/profile/${v.user.username}`,
+        })),
+      ];
 
-      const videoItems: MediaItem[] = videos.map((v) => ({
-        id: v.id,
-        type: "video" as const,
-        slug: v.slug,
-        title: v.altText || "Video",
-        thumbnailUrl: getVideoThumbnail(v.thumbnailUrl),
-        videoUrl: v.files[0]?.cdnUrl || null,
-        width: v.width,
-        height: v.height,
-        duration: v.durationSeconds,
-        isPremium: v.isPremium,
-        photographer: v.user.displayName || v.user.username,
-        photographerUrl: `/profile/${v.user.username}`,
-      }));
-
-      // Interleave: insert videos after every 3 photos
+      // Interleave videos among photos
+      const photoItems = items.filter(i => i.type === "photo");
+      const videoItems = items.filter(i => i.type === "video");
       const result: MediaItem[] = [];
       let vi = 0;
       for (let i = 0; i < photoItems.length; i++) {
         result.push(photoItems[i]);
-        if ((i + 1) % 3 === 0 && vi < videoItems.length) {
+        if ((i + 1) % 2 === 0 && vi < videoItems.length) {
           result.push(videoItems[vi++]);
         }
       }
-      while (vi < videoItems.length) {
-        result.push(videoItems[vi++]);
-      }
+      while (vi < videoItems.length) result.push(videoItems[vi++]);
       return result;
     } catch {
       return [];
@@ -143,21 +145,18 @@ async function getCuratedMedia(): Promise<MediaItem[]> {
 }
 
 async function getTrendingMedia(): Promise<MediaItem[]> {
-  return cached("home:trending:media", CacheTTL.HOME, async () => {
+  return cached("home:trending:v2", CacheTTL.HOME, async () => {
     try {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-
       const [photos, videos] = await Promise.all([
         prisma.photo.findMany({
-          where: { status: "approved", updatedAt: { gte: weekAgo } },
+          where: { status: "approved" },
           take: 6,
           orderBy: { viewsCount: "desc" },
           include: { user: { select: { username: true, displayName: true } } },
         }),
         prisma.video.findMany({
-          where: { status: "approved", updatedAt: { gte: weekAgo } },
-          take: 2,
+          where: { status: "approved" },
+          take: 3,
           orderBy: { viewsCount: "desc" },
           include: {
             user: { select: { username: true, displayName: true } },
@@ -166,45 +165,46 @@ async function getTrendingMedia(): Promise<MediaItem[]> {
         }),
       ]);
 
-      const photoItems: MediaItem[] = photos.map((p) => ({
-        id: p.id,
-        type: "photo" as const,
-        slug: p.slug,
-        title: p.altText || "Photo",
-        thumbnailUrl: getPhotoUrl(p),
-        width: p.width,
-        height: p.height,
-        isPremium: p.isPremium,
-        photographer: p.user.displayName || p.user.username,
-        photographerUrl: `/profile/${p.user.username}`,
-      }));
+      const items: MediaItem[] = [
+        ...photos.map((p) => ({
+          id: p.id,
+          type: "photo" as const,
+          slug: p.slug,
+          title: p.altText || "Photo",
+          thumbnailUrl: getPhotoUrl(p),
+          width: p.width,
+          height: p.height,
+          isPremium: p.isPremium,
+          photographer: p.user.displayName || p.user.username,
+          photographerUrl: `/profile/${p.user.username}`,
+        })),
+        ...videos.map((v) => ({
+          id: v.id,
+          type: "video" as const,
+          slug: v.slug,
+          title: v.altText || "Video",
+          thumbnailUrl: getVideoThumbnail(v.thumbnailUrl),
+          videoUrl: v.files[0]?.cdnUrl || null,
+          width: v.width,
+          height: v.height,
+          duration: v.durationSeconds,
+          isPremium: v.isPremium,
+          photographer: v.user.displayName || v.user.username,
+          photographerUrl: `/profile/${v.user.username}`,
+        })),
+      ];
 
-      const videoItems: MediaItem[] = videos.map((v) => ({
-        id: v.id,
-        type: "video" as const,
-        slug: v.slug,
-        title: v.altText || "Video",
-        thumbnailUrl: getVideoThumbnail(v.thumbnailUrl),
-        videoUrl: v.files[0]?.cdnUrl || null,
-        width: v.width,
-        height: v.height,
-        duration: v.durationSeconds,
-        isPremium: v.isPremium,
-        photographer: v.user.displayName || v.user.username,
-        photographerUrl: `/profile/${v.user.username}`,
-      }));
-
+      const photoItems = items.filter(i => i.type === "photo");
+      const videoItems = items.filter(i => i.type === "video");
       const result: MediaItem[] = [];
       let vi = 0;
       for (let i = 0; i < photoItems.length; i++) {
         result.push(photoItems[i]);
-        if ((i + 1) % 3 === 0 && vi < videoItems.length) {
+        if ((i + 1) % 2 === 0 && vi < videoItems.length) {
           result.push(videoItems[vi++]);
         }
       }
-      while (vi < videoItems.length) {
-        result.push(videoItems[vi++]);
-      }
+      while (vi < videoItems.length) result.push(videoItems[vi++]);
       return result;
     } catch {
       return [];
@@ -213,7 +213,7 @@ async function getTrendingMedia(): Promise<MediaItem[]> {
 }
 
 async function getTrendingCategories(): Promise<CategoryItem[]> {
-  return cached("home:categories", CacheTTL.HOME, async () => {
+  return cached("home:categories:v2", CacheTTL.HOME, async () => {
     try {
       const tags = await prisma.tag.findMany({
         orderBy: { photosCount: "desc" },
@@ -246,6 +246,12 @@ async function getTrendingCategories(): Promise<CategoryItem[]> {
   });
 }
 
+function formatStat(n: number): string {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return n.toString();
+}
+
 /* ─── page ─── */
 
 interface HomePageProps {
@@ -256,103 +262,109 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const resolvedSearchParams = await searchParams;
   const sort = resolvedSearchParams.sort || "curated";
 
-  const [collections, curatedMedia, trendingMedia, categories] =
+  const [heroPhotos, stats, curatedMedia, trendingMedia, categories] =
     await Promise.all([
-      getFeaturedCollections(),
+      getHeroPhotos(),
+      getStats(),
       getCuratedMedia(),
       getTrendingMedia(),
       getTrendingCategories(),
     ]);
 
+  const heroUrl = heroPhotos[0]?.url || "";
+
   return (
     <>
-      {/* ── Hero Section (white, split layout) ── */}
-      <section className="bg-white pt-12 pb-16">
-        <div className="container-app">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left – headline + search */}
-            <div>
-              <h1 className="text-hero-sm sm:text-hero text-surface-900 tracking-tight leading-tight">
-                The best free stock photos, royalty free images &amp; videos{" "}
-                <span className="text-brand">shared by creators.</span>
-              </h1>
-              <div className="mt-8">
-                <SearchBar autoFocus />
+      {/* ── Cinematic Hero ── */}
+      <section className="relative min-h-[520px] sm:min-h-[600px] flex items-center justify-center overflow-hidden">
+        {/* Background image */}
+        {heroUrl && (
+          <img
+            src={heroUrl}
+            alt="Hero background"
+            className="absolute inset-0 w-full h-full object-cover"
+            fetchPriority="high"
+          />
+        )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+
+        {/* Content */}
+        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+          <p className="text-sm sm:text-base font-medium text-white/70 tracking-widest uppercase mb-4">
+            PixelStock — Free to use everywhere
+          </p>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
+            Where creativity<br className="hidden sm:block" />
+            <span className="text-brand-400"> finds its canvas.</span>
+          </h1>
+          <p className="mt-4 text-lg sm:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
+            Discover stunning photos and videos shared by talented creators worldwide — all free to download and use.
+          </p>
+
+          {/* Search */}
+          <div className="mt-8 flex justify-center">
+            <SearchBar autoFocus variant="hero" />
+          </div>
+
+          {/* Trending topics */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <span className="text-sm text-white/50">Popular:</span>
+            {["Nature", "Architecture", "Portraits", "Travel", "Abstract", "Food"].map(
+              (tag) => (
+                <Link
+                  key={tag}
+                  href={`/search/${tag.toLowerCase()}`}
+                  className="text-sm text-white/70 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full transition-all"
+                >
+                  {tag}
+                </Link>
+              )
+            )}
+          </div>
+
+          {/* Quick browse buttons */}
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <Link
+              href="/discover"
+              className="inline-flex items-center gap-2 bg-white text-surface-900 font-semibold text-sm px-6 py-3 rounded-full hover:bg-white/90 transition-colors shadow-lg"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Browse Photos
+            </Link>
+            <Link
+              href="/search?tab=videos"
+              className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm text-white font-semibold text-sm px-6 py-3 rounded-full hover:bg-white/25 transition-colors border border-white/20"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+              Browse Videos
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Stats Ribbon ── */}
+      <section className="bg-surface-50 border-y border-surface-200">
+        <div className="container-app py-5">
+          <div className="flex items-center justify-center gap-8 sm:gap-16 text-center">
+            {[
+              { label: "Photos", value: formatStat(stats.photos), icon: "📷" },
+              { label: "Videos", value: formatStat(stats.videos), icon: "🎬" },
+              { label: "Creators", value: formatStat(stats.creators), icon: "👤" },
+              { label: "Downloads", value: formatStat(stats.downloads), icon: "⬇️" },
+            ].map((stat) => (
+              <div key={stat.label} className="flex items-center gap-2">
+                <span className="text-lg">{stat.icon}</span>
+                <div className="text-left">
+                  <p className="text-lg sm:text-xl font-bold text-surface-900">{stat.value}</p>
+                  <p className="text-xs text-surface-500">{stat.label}</p>
+                </div>
               </div>
-              <p className="mt-4 text-caption text-surface-400">
-                Trending:{" "}
-                {["Nature", "Business", "Technology", "Food", "Travel"].map(
-                  (tag, i) => (
-                    <Link
-                      key={tag}
-                      href={`/search/${tag.toLowerCase()}`}
-                      className="text-surface-500 hover:text-brand transition-colors"
-                    >
-                      {i > 0 && ", "}
-                      {tag}
-                    </Link>
-                  )
-                )}
-              </p>
-            </div>
-
-            {/* Right – 2 featured collection cards */}
-            <div className="hidden lg:grid grid-cols-2 gap-4">
-              {collections.slice(0, 2).map((col: any) => {
-                const coverPhoto = col.items?.[0]?.photo;
-                const coverUrl = coverPhoto
-                  ? getPhotoUrl(coverPhoto, "medium")
-                  : null;
-                const bgColor = coverPhoto?.dominantColor || "#374151";
-
-                return (
-                  <Link
-                    key={col.id}
-                    href={`/collections/${col.id}`}
-                    className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-surface-100"
-                  >
-                    {coverUrl ? (
-                      <img
-                        src={coverUrl}
-                        alt={col.title}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div
-                        className="absolute inset-0"
-                        style={{ backgroundColor: bgColor }}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="text-body font-semibold text-white truncate">
-                        {col.title}
-                      </p>
-                      <p className="text-caption text-white/70 mt-0.5">
-                        {col._count.items}{" "}
-                        {col._count.items === 1 ? "item" : "items"}
-                      </p>
-                      <span className="inline-flex items-center gap-1 text-caption font-medium text-white mt-2 group-hover:underline">
-                        Join
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 8l4 4m0 0l-4 4m4-4H3"
-                          />
-                        </svg>
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -360,148 +372,101 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       {/* ── Navigation Tabs ── */}
       <HomeControls />
 
-      {/* ── Feed Header + Categories ── */}
-      <section className="container-app pt-10">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-title text-surface-900">
-            Free Stock Photos &amp; Videos
-          </h2>
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="text-micro text-surface-400">Sort:</span>
-            <Link
-              href="/"
-              className={`text-caption px-3 py-1 rounded-full transition-colors ${
-                sort === "curated"
-                  ? "bg-surface-900 text-white"
-                  : "text-surface-500 hover:text-surface-800"
-              }`}
-            >
-              Trending
-            </Link>
-            <Link
-              href="/?sort=newest"
-              className={`text-caption px-3 py-1 rounded-full transition-colors ${
-                sort === "newest"
-                  ? "bg-surface-900 text-white"
-                  : "text-surface-500 hover:text-surface-800"
-              }`}
-            >
-              New
-            </Link>
-          </div>
-        </div>
-
-        {/* Category chips */}
-        <div className="mb-8">
+      {/* ── Category Chips ── */}
+      {categories.length > 0 && (
+        <section className="container-app pt-8 pb-4">
           <CategoryChips categories={categories} />
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── Curated by our team ── */}
+      {/* ── Editor's Picks ── */}
       {curatedMedia.length > 0 && (
         <section className="container-app py-8">
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-title text-surface-900">
-                Curated by our team
+              <h2 className="text-2xl font-bold text-surface-900">
+                Editor&apos;s Picks
               </h2>
-              <p className="text-caption text-surface-500 mt-1">
-                Hand-picked photos &amp; videos by our editors
+              <p className="text-sm text-surface-500 mt-1">
+                Hand-selected photos &amp; videos by our creative team
               </p>
             </div>
             <Link
-              href="/search/photos?sort=curated"
-              className="text-caption text-surface-500 hover:text-surface-900 transition-colors"
+              href="/discover"
+              className="text-sm font-medium text-brand hover:text-brand-600 transition-colors hidden sm:inline-flex items-center gap-1"
             >
-              See all →
+              Explore more
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           </div>
           <MediaGrid items={curatedMedia} />
         </section>
       )}
 
-      {/* ── Trending this week ── */}
+      {/* ── Popular Right Now ── */}
       {trendingMedia.length > 0 && (
-        <section className="container-app py-8">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="text-title text-surface-900">
-                Trending this week
-              </h2>
-              <p className="text-caption text-surface-500 mt-1">
-                Most viewed photos &amp; videos in the last 7 days
-              </p>
+        <section className="bg-surface-50 py-10">
+          <div className="container-app">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-surface-900">
+                  Popular Right Now
+                </h2>
+                <p className="text-sm text-surface-500 mt-1">
+                  Most viewed content from our community
+                </p>
+              </div>
+              <Link
+                href="/?sort=popular"
+                className="text-sm font-medium text-brand hover:text-brand-600 transition-colors hidden sm:inline-flex items-center gap-1"
+              >
+                View all
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
-            <Link
-              href="/?sort=popular"
-              className="text-caption text-surface-500 hover:text-surface-900 transition-colors"
-            >
-              See all →
-            </Link>
-          </div>
-          <MediaGrid items={trendingMedia} />
-        </section>
-      )}
-
-      {/* ── Featured Collections ── */}
-      {collections.length > 0 && (
-        <section className="container-app py-8">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-title text-surface-900">
-              Featured Collections
-            </h2>
-            <Link
-              href="/collections"
-              className="text-caption text-surface-500 hover:text-surface-900 transition-colors"
-            >
-              See all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {collections.map((col: any) => {
-              const coverPhoto = col.items?.[0]?.photo;
-              const coverUrl = coverPhoto
-                ? getPhotoUrl(coverPhoto, "medium")
-                : null;
-              const bgColor = coverPhoto?.dominantColor || "#374151";
-
-              return (
-                <Link
-                  key={col.id}
-                  href={`/collections/${col.id}`}
-                  className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-surface-100"
-                >
-                  {coverUrl ? (
-                    <img
-                      src={coverUrl}
-                      alt={col.title}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div
-                      className="absolute inset-0"
-                      style={{ backgroundColor: bgColor }}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <p className="text-caption font-medium text-white truncate">
-                      {col.title}
-                    </p>
-                    <p className="text-micro text-white/70">
-                      {col._count.items}{" "}
-                      {col._count.items === 1 ? "item" : "items"}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
+            <MediaGrid items={trendingMedia} />
           </div>
         </section>
       )}
+
+      {/* ── Feed Header ── */}
+      <section className="container-app pt-10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-surface-900">
+            Explore All Media
+          </h2>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="text-xs text-surface-400 uppercase tracking-wider">Sort:</span>
+            <Link
+              href="/"
+              className={`text-sm px-4 py-1.5 rounded-full font-medium transition-colors ${
+                sort === "curated"
+                  ? "bg-surface-900 text-white"
+                  : "text-surface-500 hover:text-surface-800 hover:bg-surface-100"
+              }`}
+            >
+              Trending
+            </Link>
+            <Link
+              href="/?sort=newest"
+              className={`text-sm px-4 py-1.5 rounded-full font-medium transition-colors ${
+                sort === "newest"
+                  ? "bg-surface-900 text-white"
+                  : "text-surface-500 hover:text-surface-800 hover:bg-surface-100"
+              }`}
+            >
+              New
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* ── Main Feed (infinite scroll) ── */}
-      <section className="container-app pb-12">
+      <section className="container-app pb-16">
         <HomeFeed sort={sort} />
       </section>
     </>
