@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   const [photos, videos] = await Promise.all([
     prisma.photo.findMany({
-      where: { status: "approved" },
+      where: { status: "approved", width: { gt: 0 }, height: { gt: 0 } },
       orderBy: photoOrderBy,
       skip: (page - 1) * photoCount,
       take: photoCount,
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       },
     }),
     prisma.video.findMany({
-      where: { status: "approved" },
+      where: { status: "approved", width: { gt: 0 }, height: { gt: 0 } },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * videoCount,
       take: videoCount,

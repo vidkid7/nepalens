@@ -79,8 +79,8 @@ export default function MasonryGrid({ photos, columns = 3, gap = 16 }: MasonryGr
       const shortestCol = heights.indexOf(Math.min(...heights));
       if (shortestCol < 0 || shortestCol >= columns) return;
       result[shortestCol].push({ item, globalIndex: i });
-      const w = item.width || 1;
-      const h = item.height || 1;
+      const w = item.width || 400;
+      const h = item.height || 300;
       heights[shortestCol] += h / w;
     });
 

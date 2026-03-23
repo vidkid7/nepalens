@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
 }
 
 function buildPhotoWhere(q: string, orientation: string, size: string, color: string) {
-  const where: any = { status: "approved" };
+  const where: any = { status: "approved", width: { gt: 0 }, height: { gt: 0 } };
 
   if (q) {
     where.OR = [
@@ -287,7 +287,7 @@ function buildPhotoWhere(q: string, orientation: string, size: string, color: st
 }
 
 function buildVideoWhere(q: string, orientation: string) {
-  const where: any = { status: "approved" };
+  const where: any = { status: "approved", width: { gt: 0 }, height: { gt: 0 } };
 
   if (q) {
     where.OR = [
