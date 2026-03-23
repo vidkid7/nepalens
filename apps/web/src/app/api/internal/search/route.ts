@@ -239,7 +239,46 @@ function buildPhotoWhere(q: string, orientation: string, size: string, color: st
   }
 
   if (color) {
-    where.colorBucket = color;
+    // Match by colorBucket (exact name match) or by dominantColor hex approximation
+    const colorHexMap: Record<string, string[]> = {
+      red: ["#ef4444", "#dc2626", "#b91c1c", "#e8"],
+      orange: ["#f97316", "#ea580c", "#e87", "#E87", "#E86"],
+      yellow: ["#eab308", "#ca8a04", "#D4A"],
+      green: ["#22c55e", "#16a34a", "#4A6E", "#5C8A", "#6B8A", "#4D6B", "#2D6B", "#3D8A", "#5A7D3D"],
+      turquoise: ["#14b8a6", "#0d9488", "#3D7D6B"],
+      blue: ["#3b82f6", "#2563eb", "#5A7D8F", "#4A8A", "#2D6BAD", "#87CEEB", "#1A2A3D"],
+      violet: ["#8b5cf6", "#7c3aed", "#8A5C"],
+      pink: ["#ec4899", "#db2777", "#AD5C"],
+      brown: ["#a16207", "#92400e", "#8B7D", "#8B6B", "#6B5A"],
+      black: ["#171717", "#1a1a1a", "#0a0a0a"],
+      gray: ["#9ca3af", "#6b7280", "#7D8A", "#8A9D", "#6B7D"],
+      white: ["#f5f5f5", "#ffffff", "#e5e5e5"],
+    };
+    where.OR = [
+      ...(where.OR || []),
+    ];
+    // Wrap existing OR in AND to not conflict
+    const existingOr = where.OR.length > 0 ? [...where.OR] : undefined;
+    delete where.OR;
+    
+    const colorConditions: any[] = [{ colorBucket: color }];
+    const hexPrefixes = colorHexMap[color] || [];
+    for (const prefix of hexPrefixes) {
+      colorConditions.push({ dominantColor: { startsWith: prefix, mode: "insensitive" } });
+    }
+    
+    if (existingOr && existingOr.length > 0) {
+      where.AND = [
+        ...(where.AND || []),
+        { OR: existingOr },
+        { OR: colorConditions },
+      ];
+    } else {
+      where.AND = [
+        ...(where.AND || []),
+        { OR: colorConditions },
+      ];
+    }
   }
 
   return where;

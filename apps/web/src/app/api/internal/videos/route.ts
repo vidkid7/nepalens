@@ -3,7 +3,83 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@pixelstock/database";
 
-// POST /api/internal/videos — Create video record after S3 upload
+export const dynamic = "force-dynamic";
+
+// GET /api/internal/videos — List videos (supports ?user=username)
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const username = searchParams.get("user");
+  const perPage = Math.min(parseInt(searchParams.get("per_page") || "30"), 100);
+  const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+
+  const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || "";
+
+  const where: any = { status: "approved" };
+  if (username) {
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+    if (!user) {
+      return NextResponse.json({ videos: [] });
+    }
+    where.userId = user.id;
+  }
+
+  const videos = await prisma.video.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (page - 1) * perPage,
+    take: perPage,
+    include: {
+      user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+      files: { orderBy: { width: "asc" } },
+    },
+  });
+
+  const mapped = videos.map((v) => {
+    const originalFile = v.files.find((f) => f.quality === "original") || v.files[0];
+    const videoUrl = originalFile?.cdnUrl?.startsWith("http")
+      ? originalFile.cdnUrl
+      : originalFile?.cdnUrl
+        ? `${cdnBase}/${originalFile.cdnUrl}`
+        : null;
+
+    let thumbnailUrl = v.thumbnailUrl;
+    if (!thumbnailUrl && videoUrl?.includes("res.cloudinary.com")) {
+      thumbnailUrl = videoUrl
+        .replace("/video/upload/", "/video/upload/so_0,w_640,c_limit,q_auto,f_jpg/")
+        .replace(/\.[^.]+$/, ".jpg");
+    }
+
+    return {
+      id: v.id,
+      slug: v.slug || v.id,
+      alt: v.altText || v.description,
+      width: v.width,
+      height: v.height,
+      isPremium: v.isPremium,
+      src: {
+        large: thumbnailUrl || `https://placehold.co/${v.width}x${v.height}/1a1a1a/ffffff?text=Video`,
+      },
+      photographer: v.user?.displayName || v.user?.username || "Unknown",
+      photographer_url: `/profile/${v.user?.username || "user"}`,
+      avg_color: "#1a1a1a",
+      videoUrl,
+      duration: v.durationSeconds,
+    };
+  });
+
+  const safeResult = JSON.parse(
+    JSON.stringify({ videos: mapped }, (_key, value) =>
+      typeof value === "bigint" ? Number(value) : value
+    )
+  );
+
+  return NextResponse.json(safeResult);
+}
+
+// POST /api/internal/videos — Create video record after upload
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
