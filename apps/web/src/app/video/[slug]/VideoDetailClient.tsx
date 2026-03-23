@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import Avatar from "@/components/ui/Avatar";
 import SaveToCollectionModal from "@/components/collections/SaveToCollectionModal";
@@ -31,6 +32,7 @@ interface VideoData {
   fps: number | null;
   isPremium: boolean;
   thumbnailUrl: string;
+  photographerId?: string;
   photographer: {
     username: string;
     displayName: string;
@@ -83,6 +85,7 @@ export default function VideoDetailClient({
 }) {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [liked, setLiked] = useState(false);
@@ -183,13 +186,33 @@ export default function VideoDetailClient({
         }
 
         if (data.url) {
-          const a = document.createElement("a");
-          a.href = data.url;
-          a.download = `pixelstock-${video.slug}-${quality}.mp4`;
-          a.target = "_blank";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+          // Use file proxy endpoint for proper download with Content-Disposition
+          const fileUrl = `/api/internal/videos/${video.id}/file?quality=${encodeURIComponent(quality)}`;
+          const response = await fetch(fileUrl);
+          if (!response.ok) {
+            // Fallback: try direct URL blob download
+            const directRes = await fetch(data.url);
+            if (!directRes.ok) throw new Error("Download failed");
+            const blob = await directRes.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = blobUrl;
+            a.download = `pixelstock-${video.slug}-${quality}.mp4`;
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(blobUrl); }, 200);
+          } else {
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = blobUrl;
+            a.download = `pixelstock-${video.slug}-${quality}.mp4`;
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(blobUrl); }, 200);
+          }
           toast("Download started", "success");
         } else {
           toast("Download link not available", "error");
@@ -233,6 +256,27 @@ export default function VideoDetailClient({
       toast("Link copied to clipboard", "success");
     }
   }, [video.title, toast]);
+
+  const isOwner = session && (
+    (session.user as any)?.id === video.photographerId ||
+    (session.user as any)?.isAdmin === true
+  );
+
+  const handleDelete = useCallback(async () => {
+    if (!confirm("Are you sure you want to delete this video? This action cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/internal/videos/${video.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast(data.error || "Failed to delete video", "error");
+        return;
+      }
+      toast("Video deleted successfully", "success");
+      router.push("/");
+    } catch {
+      toast("Failed to delete video", "error");
+    }
+  }, [video.id, toast, router]);
 
   const handleCollect = useCallback(() => {
     if (!session) {
@@ -439,14 +483,22 @@ export default function VideoDetailClient({
               </div>
             )}
 
-            {/* Report */}
-            <div>
+            {/* Report & Delete */}
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => setReportModalOpen(true)}
                 className="text-micro text-surface-400 hover:text-surface-600 transition-colors"
               >
                 Report this video
               </button>
+              {isOwner && (
+                <button
+                  onClick={handleDelete}
+                  className="text-micro text-red-400 hover:text-red-600 transition-colors"
+                >
+                  Delete this video
+                </button>
+              )}
             </div>
           </div>
 

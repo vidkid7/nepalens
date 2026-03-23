@@ -19,6 +19,7 @@ interface PhotoData {
   width: number;
   height: number;
   isPremium: boolean;
+  photographerId?: string;
   photographer: {
     username: string;
     displayName: string;
@@ -128,6 +129,27 @@ export default function PhotoDetailClient({
       toast("Link copied to clipboard", "success");
     }
   }, [photo.title, toast]);
+
+  const isOwner = session && (
+    (session.user as any)?.id === photo.photographerId ||
+    (session.user as any)?.isAdmin === true
+  );
+
+  const handleDelete = useCallback(async () => {
+    if (!confirm("Are you sure you want to delete this photo? This action cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/internal/photos/${photo.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast(data.error || "Failed to delete photo", "error");
+        return;
+      }
+      toast("Photo deleted successfully", "success");
+      router.push("/");
+    } catch {
+      toast("Failed to delete photo", "error");
+    }
+  }, [photo.id, toast, router]);
 
   const relatedForGrid = relatedPhotos.map((p: any) => ({
     id: p.id,
@@ -304,10 +326,18 @@ export default function PhotoDetailClient({
             </div>
 
             {/* Report */}
-            <div>
+            <div className="flex items-center gap-4">
               <button className="text-micro text-surface-400 hover:text-surface-600 transition-colors">
                 Report this photo
               </button>
+              {isOwner && (
+                <button
+                  onClick={handleDelete}
+                  className="text-micro text-red-400 hover:text-red-600 transition-colors"
+                >
+                  Delete this photo
+                </button>
+              )}
             </div>
           </div>
 

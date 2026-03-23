@@ -98,6 +98,7 @@ export default async function PhotoDetailPage({ params }: PhotoPageProps) {
         width: photo.width,
         height: photo.height,
         isPremium: photo.isPremium,
+        photographerId: photo.user.id,
         photographer: {
           username: photo.user.username,
           displayName: photo.user.displayName || photo.user.username,

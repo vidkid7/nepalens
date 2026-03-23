@@ -110,6 +110,7 @@ export default async function VideoDetailPage({ params }: VideoPageProps) {
         durationFormatted: formatDuration(video.durationSeconds),
         fps: video.frameRate,
         isPremium: video.isPremium,
+        photographerId: video.user.id,
         thumbnailUrl: (() => {
           if (video.thumbnailUrl) return video.thumbnailUrl;
           // Auto-generate from Cloudinary video URL
