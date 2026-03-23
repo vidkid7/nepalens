@@ -182,7 +182,7 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
       {/* Bottom bar — photographer + download */}
       <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-end opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-30">
         <Link
-          href={photo.photographer_url}
+          href={photo.photographer_url || "#"}
           className="text-caption font-medium text-white hover:underline z-10 truncate max-w-[60%]"
           onClick={(e) => e.stopPropagation()}
         >
