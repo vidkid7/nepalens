@@ -145,8 +145,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       {/* ── Navigation Tabs ── */}
       <HomeControls />
 
-      {/* ── Feed Title + Sort + Category Chips ── */}
-      <section className="container-app pt-8">
+      {/* ── Feed Title + Sort + Category Chips + Main Feed ── */}
+      <section className="container-app pt-8 pb-16">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl sm:text-2xl font-bold text-surface-900">
             Free Stock Photos &amp; Videos
@@ -176,14 +176,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         {categories.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-8">
             <CategoryChips categories={categories} />
           </div>
         )}
-      </section>
 
-      {/* ── Main Feed (infinite scroll masonry) ── */}
-      <section className="container-app pb-16">
+        {/* ── Main Feed (infinite scroll masonry) ── */}
         <HomeFeed sort={sort} />
       </section>
     </>

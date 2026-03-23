@@ -51,7 +51,7 @@ function AnimatedCard({ item, index }: { item: MediaItem; index: number }) {
   return (
     <div
       ref={ref}
-      className="masonry-item"
+      className="masonry-item overflow-hidden"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(16px)",
