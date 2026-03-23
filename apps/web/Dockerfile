@@ -25,10 +25,11 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/database/node_modules ./packages/database/node_modules
 COPY . .
 
-# Generate Prisma client (invoke directly via node — avoids symlink issues)
-RUN node node_modules/prisma/build/index.js generate --schema=packages/database/prisma/schema.prisma
+# Generate Prisma client
+RUN node packages/database/node_modules/prisma/build/index.js generate --schema=packages/database/prisma/schema.prisma
 
 # Build all packages then the web app
 ENV NEXT_TELEMETRY_DISABLED=1
