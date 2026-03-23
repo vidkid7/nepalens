@@ -46,6 +46,16 @@ export async function POST(request: NextRequest) {
     // Use cloudinaryUrl if provided, otherwise fall back to CDN_URL + s3Key
     const originalUrl = cloudinaryUrl || `${process.env.NEXT_PUBLIC_CDN_URL || ""}/${s3Key}`;
 
+    // Auto-generate thumbnail from Cloudinary video URL
+    let thumbnailUrl: string | null = null;
+    if (cloudinaryUrl && cloudinaryUrl.includes("res.cloudinary.com")) {
+      // Transform video URL to get a frame as JPG thumbnail
+      // e.g. .../video/upload/v123/path.mp4 → .../video/upload/so_0,w_640,c_limit,f_jpg/v123/path.mp4.jpg
+      thumbnailUrl = cloudinaryUrl
+        .replace("/video/upload/", "/video/upload/so_0,w_640,c_limit,q_auto,f_jpg/")
+        .replace(/\.[^.]+$/, ".jpg");
+    }
+
     const w = typeof width === "number" && width > 0 ? width : 1920;
     const h = typeof height === "number" && height > 0 ? height : 1080;
     const orientation = w > h ? "landscape" : w < h ? "portrait" : "square";
@@ -63,7 +73,7 @@ export async function POST(request: NextRequest) {
         orientation,
         status: "approved",
         isPremium: isPremium === true,
-        thumbnailUrl: null,
+        thumbnailUrl,
       },
       include: {
         user: { select: { id: true, username: true, displayName: true, avatarUrl: true } },

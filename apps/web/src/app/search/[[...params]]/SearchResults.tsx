@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import MasonryGrid from "@/components/media/MasonryGrid";
@@ -31,6 +31,8 @@ interface VideoResult {
   height: number;
   duration: number | null;
   thumbnail: string;
+  videoUrl?: string | null;
+  isPremium?: boolean;
   photographer: string;
   photographer_url: string;
   tags: string[];
@@ -500,6 +502,110 @@ function PhotoResults({
   );
 }
 
+/* ─── Video Card with hover-to-play ──────────────────────────── */
+
+function VideoCard({ video }: { video: VideoResult }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    // Small delay to avoid triggering on quick mouse passes
+    hoverTimer.current = setTimeout(() => {
+      setIsHovered(true);
+      if (videoRef.current && video.videoUrl) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
+    }, 300);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+    setIsHovered(false);
+    setIsVideoReady(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  return (
+    <Link
+      href={`/video/${video.slug}-${video.id}`}
+      className="group relative rounded-xl overflow-hidden bg-surface-100 aspect-video block"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Thumbnail (always visible, fades out when video plays) */}
+      <img
+        src={video.thumbnail}
+        alt={video.alt || video.slug}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+          isHovered && isVideoReady ? "opacity-0" : "opacity-100"
+        }`}
+        loading="lazy"
+      />
+
+      {/* Video element for hover preview */}
+      {video.videoUrl && (
+        <video
+          ref={videoRef}
+          src={isHovered ? video.videoUrl : undefined}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+            isHovered && isVideoReady ? "opacity-100" : "opacity-0"
+          }`}
+          muted
+          loop
+          playsInline
+          preload="none"
+          onCanPlay={() => setIsVideoReady(true)}
+        />
+      )}
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      {/* Duration badge */}
+      {video.duration && (
+        <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-micro rounded font-medium z-10">
+          {formatDuration(video.duration)}
+        </span>
+      )}
+
+      {/* Premium badge */}
+      {video.isPremium && (
+        <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-amber-500/90 text-white text-micro rounded font-semibold z-10">
+          PRO
+        </span>
+      )}
+
+      {/* Play button (shows on hover when video isn't playing yet) */}
+      {!(isHovered && isVideoReady) && (
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <svg className="w-6 h-6 ml-0.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* Info overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+        <p className="text-caption text-white font-medium truncate">
+          {video.alt || video.slug}
+        </p>
+        <p className="text-micro text-white/70">{video.photographer}</p>
+      </div>
+    </Link>
+  );
+}
+
 /* ─── Video Results ───────────────────────────────────────────── */
 
 function VideoResults({
@@ -528,36 +634,7 @@ function VideoResults({
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {results.map((video) => (
-            <Link
-              key={video.id}
-              href={`/video/${video.slug}-${video.id}`}
-              className="group relative rounded-xl overflow-hidden bg-surface-100 aspect-video"
-            >
-              <img
-                src={video.thumbnail}
-                alt={video.alt || video.slug}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              {video.duration && (
-                <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-micro rounded font-medium">
-                  {formatDuration(video.duration)}
-                </span>
-              )}
-              <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <p className="text-caption text-white font-medium truncate">
-                  {video.alt || video.slug}
-                </p>
-                <p className="text-micro text-white/70">{video.photographer}</p>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <svg className="w-6 h-6 ml-0.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
+            <VideoCard key={video.id} video={video} />
           ))}
         </div>
       </InfiniteScroll>

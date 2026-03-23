@@ -50,7 +50,7 @@ async function getRelatedVideos(videoId: string, tags: string[]) {
       orderBy: { viewsCount: "desc" },
       include: {
         user: { select: { username: true, displayName: true } },
-        files: { take: 1, orderBy: { width: "desc" } },
+        files: { orderBy: { width: "asc" } },
       },
     });
     return related;
@@ -110,9 +110,17 @@ export default async function VideoDetailPage({ params }: VideoPageProps) {
         durationFormatted: formatDuration(video.durationSeconds),
         fps: video.frameRate,
         isPremium: video.isPremium,
-        thumbnailUrl:
-          video.thumbnailUrl ||
-          `https://placehold.co/${video.width}x${video.height}/1a1a1a/ffffff?text=${encodeURIComponent(fallbackTitle || "Video")}`,
+        thumbnailUrl: (() => {
+          if (video.thumbnailUrl) return video.thumbnailUrl;
+          // Auto-generate from Cloudinary video URL
+          const originalFile = video.files.find((f: any) => f.quality === "original") || video.files[0];
+          if (originalFile?.cdnUrl?.includes("res.cloudinary.com")) {
+            return originalFile.cdnUrl
+              .replace("/video/upload/", "/video/upload/so_0,w_1280,c_limit,q_auto,f_jpg/")
+              .replace(/\.[^.]+$/, ".jpg");
+          }
+          return `https://placehold.co/${video.width}x${video.height}/1a1a1a/ffffff?text=${encodeURIComponent(fallbackTitle || "Video")}`;
+        })(),
         photographer: {
           username: video.user.username,
           displayName: video.user.displayName || video.user.username,
@@ -167,18 +175,31 @@ export default async function VideoDetailPage({ params }: VideoPageProps) {
   const tagNames = video ? video.tags.map((vt: any) => vt.tag.name) : [];
   const relatedVideos = await getRelatedVideos(videoId, tagNames);
 
-  const relatedData = relatedVideos.map((v: any) => ({
-    id: v.id,
-    slug: v.slug,
-    title: v.altText || v.description || "Video",
-    width: v.width,
-    height: v.height,
-    duration: v.durationSeconds,
-    thumbnailUrl: v.thumbnailUrl || `https://placehold.co/640x360/1a1a1a/fff?text=Video`,
-    photographer: v.user?.displayName || v.user?.username || "Unknown",
-    photographerUrl: `/profile/${v.user?.username || "user"}`,
-    previewUrl: v.files?.[0]?.cdnUrl || null,
-  }));
+  const relatedData = relatedVideos.map((v: any) => {
+    let thumb = v.thumbnailUrl;
+    if (!thumb) {
+      const origFile = v.files?.find((f: any) => f.quality === "original") || v.files?.[0];
+      if (origFile?.cdnUrl?.includes("res.cloudinary.com")) {
+        thumb = origFile.cdnUrl
+          .replace("/video/upload/", "/video/upload/so_0,w_640,c_limit,q_auto,f_jpg/")
+          .replace(/\.[^.]+$/, ".jpg");
+      } else {
+        thumb = `https://placehold.co/640x360/1a1a1a/fff?text=Video`;
+      }
+    }
+    return {
+      id: v.id,
+      slug: v.slug,
+      title: v.altText || v.description || "Video",
+      width: v.width,
+      height: v.height,
+      duration: v.durationSeconds,
+      thumbnailUrl: thumb,
+      photographer: v.user?.displayName || v.user?.username || "Unknown",
+      photographerUrl: `/profile/${v.user?.username || "user"}`,
+      previewUrl: v.files?.[0]?.cdnUrl || null,
+    };
+  });
 
   return <VideoDetailClient video={videoData} relatedVideos={relatedData} />;
 }

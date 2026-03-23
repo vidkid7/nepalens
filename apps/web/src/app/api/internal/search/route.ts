@@ -115,26 +115,47 @@ export async function GET(request: NextRequest) {
         skip,
       });
 
-      const formatted = videos.map((v) => ({
-        id: v.id,
-        slug: v.slug,
-        alt: v.altText,
-        width: v.width,
-        height: v.height,
-        duration: v.durationSeconds,
-        thumbnail: v.thumbnailUrl || `https://placehold.co/640x360/1a1a1a/fff?text=Video`,
-        photographer: v.user?.displayName || v.user?.username || "Unknown",
-        photographer_url: v.user ? `/profile/${v.user.username}` : "",
-        photographer_id: v.userId,
-        tags: v.tags.map((vt) => vt.tag.name),
-        files: v.files.map((f) => ({
-          quality: f.quality,
-          width: f.width,
-          height: f.height,
-          url: f.cdnUrl,
-        })),
-        created_at: v.createdAt.toISOString(),
-      }));
+      const formatted = videos.map((v) => {
+        // Build thumbnail: use stored one, or auto-generate from Cloudinary video, or placeholder
+        let thumbnail = v.thumbnailUrl;
+        if (!thumbnail) {
+          const originalFile = v.files.find((f) => f.quality === "original") || v.files[0];
+          if (originalFile?.cdnUrl?.includes("res.cloudinary.com")) {
+            thumbnail = originalFile.cdnUrl
+              .replace("/video/upload/", "/video/upload/so_0,w_640,c_limit,q_auto,f_jpg/")
+              .replace(/\.[^.]+$/, ".jpg");
+          } else {
+            thumbnail = `https://placehold.co/640x360/1a1a1a/fff?text=Video`;
+          }
+        }
+        // Pick the best file for hover preview (prefer SD/HD for fast loading)
+        const previewFile = v.files.find((f) => f.quality === "sd") 
+          || v.files.find((f) => f.quality === "hd") 
+          || v.files[0];
+
+        return {
+          id: v.id,
+          slug: v.slug,
+          alt: v.altText,
+          width: v.width,
+          height: v.height,
+          duration: v.durationSeconds,
+          thumbnail,
+          videoUrl: previewFile?.cdnUrl || null,
+          isPremium: v.isPremium || false,
+          photographer: v.user?.displayName || v.user?.username || "Unknown",
+          photographer_url: v.user ? `/profile/${v.user.username}` : "",
+          photographer_id: v.userId,
+          tags: v.tags.map((vt) => vt.tag.name),
+          files: v.files.map((f) => ({
+            quality: f.quality,
+            width: f.width,
+            height: f.height,
+            url: f.cdnUrl,
+          })),
+          created_at: v.createdAt.toISOString(),
+        };
+      });
 
       return { results: formatted, total_results: videoCount, page, per_page: perPage, counts };
     }
