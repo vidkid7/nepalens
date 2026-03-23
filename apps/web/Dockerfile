@@ -43,6 +43,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -55,10 +56,5 @@ COPY --from=builder /app/apps/web/public ./apps/web/public
 USER nextjs
 
 EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-3000}/api/health || exit 1
 
 CMD ["node", "apps/web/server.js"]
