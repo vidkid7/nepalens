@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@nepalens/database";
+import { invalidateFeeds } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -226,6 +227,8 @@ export async function POST(request: NextRequest) {
         tags: { include: { tag: true } },
       },
     });
+
+    await invalidateFeeds();
 
     const safeResult = JSON.parse(
       JSON.stringify(result, (_key, value) =>

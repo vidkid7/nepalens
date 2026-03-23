@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { invalidateCollection } from "@/lib/cache";
 
 // POST /api/internal/collections/[id]/items — Add media to collection
 export async function POST(
@@ -45,6 +46,8 @@ export async function POST(
     data: { itemsCount: { increment: 1 } },
   });
 
+  await invalidateCollection(id);
+
   return NextResponse.json({ message: "Added to collection" }, { status: 201 });
 }
 
@@ -78,6 +81,8 @@ export async function DELETE(
     where: { id },
     data: { itemsCount: { decrement: 1 } },
   });
+
+  await invalidateCollection(id);
 
   return NextResponse.json({ message: "Removed from collection" });
 }

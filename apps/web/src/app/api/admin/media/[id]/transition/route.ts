@@ -3,6 +3,7 @@ import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { CONTENT_STATES, isValidTransition } from "@nepalens/shared";
+import { invalidateFeeds } from "@/lib/cache";
 
 const VALID_STATES = new Set(Object.values(CONTENT_STATES));
 
@@ -99,6 +100,8 @@ export async function PATCH(
       },
     },
   });
+
+  await invalidateFeeds();
 
   return NextResponse.json({
     message: `${mediaType} transitioned from '${currentStatus}' to '${targetState}'`,

@@ -204,3 +204,63 @@ export const CacheTTL = {
 export function isRedisConnected(): boolean {
   return !connectionFailed && redis?.status === "ready";
 }
+
+// ─── Batch Invalidation Helpers ───
+
+/** Invalidate all feed-related caches (after upload, delete, approval, etc.) */
+export async function invalidateFeeds(): Promise<void> {
+  await Promise.all([
+    cacheDel("photos:feed:*"),
+    cacheDel("photos:search:*"),
+    cacheDel("home:*"),
+    cacheDel("discover:*"),
+  ]).catch(() => {});
+}
+
+/** Invalidate a specific photo's detail cache */
+export async function invalidatePhotoDetail(slugOrId: string): Promise<void> {
+  await cacheDel(`photos:detail:${slugOrId}`).catch(() => {});
+}
+
+/** Invalidate a specific collection cache */
+export async function invalidateCollection(id: string): Promise<void> {
+  await cacheDel(`collection:${id}`).catch(() => {});
+}
+
+/** Invalidate a user's profile cache */
+export async function invalidateUserProfile(username: string): Promise<void> {
+  await cacheDel(`user:profile:${username}`).catch(() => {});
+}
+
+/** Invalidate leaderboard cache */
+export async function invalidateLeaderboard(): Promise<void> {
+  await cacheDel("leaderboard:*").catch(() => {});
+}
+
+/** Invalidate everything (nuclear option — used by admin clear-caches) */
+export async function invalidateAll(): Promise<void> {
+  await Promise.all([
+    cacheDel("photos:*"),
+    cacheDel("home:*"),
+    cacheDel("discover:*"),
+    cacheDel("autocomplete:*"),
+    cacheDel("leaderboard:*"),
+    cacheDel("user:*"),
+    cacheDel("collection:*"),
+  ]).catch(() => {});
+}
+
+// ─── Graceful Shutdown ───
+
+export function shutdownRedis(): Promise<void> {
+  if (redis) {
+    return redis.quit().catch(() => {}).then(() => { redis = null; });
+  }
+  return Promise.resolve();
+}
+
+if (typeof process !== "undefined") {
+  const cleanup = () => { shutdownRedis(); };
+  process.on("SIGTERM", cleanup);
+  process.on("SIGINT", cleanup);
+}

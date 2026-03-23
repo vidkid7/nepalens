@@ -1,0 +1,49 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build caches
+.next
+.turbo
+dist
+out
+
+# Testing
+coverage
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Version control
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+*.md
+LICENSE
+
+# Dev files
+.env.local
+.env.development
+.env.test
+docker-compose.yml
+scripts/
+stock\ imges/
+stock\ videos/

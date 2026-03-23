@@ -13,7 +13,12 @@
     "db:generate": "npm run generate --workspace=@nepalens/database",
     "db:migrate": "npm run migrate --workspace=@nepalens/database",
     "db:seed": "npm run seed --workspace=@nepalens/database",
-    "db:push": "npm run push --workspace=@nepalens/database"
+    "db:push": "npm run push --workspace=@nepalens/database",
+    "docker:infra": "docker compose up -d postgres redis elasticsearch minio minio-init",
+    "docker:prod": "docker compose --profile prod up -d --build",
+    "docker:down": "docker compose --profile prod down",
+    "docker:logs": "docker compose logs -f",
+    "docker:reset": "docker compose --profile prod down -v"
   },
   "devDependencies": {
     "redis-memory-server": "^0.16.0",

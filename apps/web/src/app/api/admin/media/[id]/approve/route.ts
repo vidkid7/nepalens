@@ -3,6 +3,7 @@ import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { CONTENT_STATES, isValidTransition } from "@nepalens/shared";
+import { invalidateFeeds } from "@/lib/cache";
 
 // PATCH /api/admin/media/[id]/approve
 export async function PATCH(
@@ -71,6 +72,8 @@ export async function PATCH(
       },
     });
 
+    await invalidateFeeds();
+
     return NextResponse.json({
       message: `Video ${targetStatus}`,
       status: targetStatus,
@@ -128,6 +131,8 @@ export async function PATCH(
       },
     },
   });
+
+  await invalidateFeeds();
 
   return NextResponse.json({
     message: `Photo ${targetStatus}`,

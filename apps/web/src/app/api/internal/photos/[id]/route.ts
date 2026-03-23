@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { invalidateFeeds, invalidatePhotoDetail } from "@/lib/cache";
 
 /**
  * DELETE /api/internal/photos/[id]
@@ -45,6 +46,9 @@ export async function DELETE(
 
     // Delete the photo record
     await prisma.photo.delete({ where: { id } });
+
+    await invalidateFeeds();
+    await invalidatePhotoDetail(id);
 
     // Try to delete from Cloudinary (non-blocking)
     try {

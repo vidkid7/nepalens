@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { invalidatePhotoDetail } from "@/lib/cache";
 
 // POST /api/internal/photos/[id]/like — Toggle like
 export async function POST(
@@ -28,6 +29,7 @@ export async function POST(
       where: { id: photoId },
       data: { likesCount: { decrement: 1 } },
     });
+    await invalidatePhotoDetail(id);
     return NextResponse.json({ liked: false });
   } else {
     // Like
@@ -38,6 +40,7 @@ export async function POST(
       where: { id: photoId },
       data: { likesCount: { increment: 1 } },
     });
+    await invalidatePhotoDetail(id);
     return NextResponse.json({ liked: true });
   }
 }

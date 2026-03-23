@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { invalidateFeeds } from "@/lib/cache";
 
 /**
  * DELETE /api/internal/videos/[id]
@@ -46,6 +47,8 @@ export async function DELETE(
 
     // Delete the video record
     await prisma.video.delete({ where: { id } });
+
+    await invalidateFeeds();
 
     // Try to delete from Cloudinary (non-blocking)
     try {

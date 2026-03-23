@@ -3,6 +3,7 @@ import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isProSubscriber } from "@/lib/subscription";
+import { invalidatePhotoDetail } from "@/lib/cache";
 
 // Premium images are exclusively available to Pro subscribers — no free-tier quota.
 
@@ -97,6 +98,8 @@ export async function POST(
     where: { id },
     data: { downloadsCount: { increment: 1 } },
   }).catch(() => {});
+
+  await invalidatePhotoDetail(id);
 
   // Build download URL — point to the file endpoint which resizes on-the-fly
   const downloadUrl = `/api/internal/photos/${id}/file?size=${encodeURIComponent(sizeVariant)}`;

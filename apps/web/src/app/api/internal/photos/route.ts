@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@nepalens/database";
-import { cached, cacheDel, CacheKeys, CacheTTL } from "@/lib/cache";
+import { cached, CacheKeys, CacheTTL, invalidateFeeds } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -248,11 +248,7 @@ export async function POST(request: NextRequest) {
   });
 
   // Invalidate feed caches so new upload appears
-  await Promise.all([
-    cacheDel(CacheKeys.photoFeed("curated", 1, 30)),
-    cacheDel(CacheKeys.photoFeed("newest", 1, 30)),
-    cacheDel(CacheKeys.photoFeed("popular", 1, 30)),
-  ]).catch(() => {});
+  await invalidateFeeds();
 
   // Serialize safely — Prisma BigInt fields (fileSizeBytes, viewsCount, etc.) crash JSON.stringify
   const safeResult = JSON.parse(

@@ -3,7 +3,7 @@ import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
-import { cacheDel, isRedisConnected } from "@/lib/cache";
+import { invalidateAll, isRedisConnected } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -54,13 +54,7 @@ export async function POST(request: NextRequest) {
 
   switch (action) {
     case "clear-caches": {
-      await cacheDel("photos:*");
-      await cacheDel("home:*");
-      await cacheDel("discover:*");
-      await cacheDel("autocomplete:*");
-      await cacheDel("leaderboard:*");
-      await cacheDel("user:*");
-      await cacheDel("collection:*");
+      await invalidateAll();
 
       await logAuditEvent({
         userId: adminUserId,

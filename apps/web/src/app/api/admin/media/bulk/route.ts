@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { invalidateFeeds } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,8 @@ export async function PATCH(request: NextRequest) {
         updatedCount++;
       }
     }
+
+    await invalidateFeeds();
 
     return NextResponse.json({
       message: `${updatedCount} item(s) updated`,
