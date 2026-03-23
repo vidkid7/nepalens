@@ -220,10 +220,6 @@ export default function SearchPageClient({ keyword, initialFilters }: SearchPage
 
   // Refetch on filter changes
   useEffect(() => {
-    if (!keyword) {
-      setInitialLoading(false);
-      return;
-    }
     setResults([]);
     setPage(1);
     setHasMore(true);
@@ -259,12 +255,22 @@ export default function SearchPageClient({ keyword, initialFilters }: SearchPage
               {tab === "photos" ? "Photos" : tab === "videos" ? "Videos" : "Users"}
             </>
           ) : (
-            "Search Results"
+            <>
+              {tab === "videos" ? "Browse Videos" : tab === "users" ? "Browse Users" : "Browse Photos"}
+            </>
           )}
         </h1>
-        {keyword && (
+        {keyword ? (
           <p className="text-caption text-surface-500">
             Download free {keyword} stock photos and videos
+          </p>
+        ) : (
+          <p className="text-caption text-surface-500">
+            {tab === "videos"
+              ? "Explore our collection of free stock videos"
+              : tab === "users"
+                ? "Discover talented creators"
+                : "Explore our collection of free stock photos"}
           </p>
         )}
       </div>
@@ -483,7 +489,8 @@ function PhotoResults({
     <>
       {total > 0 && (
         <p className="text-caption text-surface-500 mb-5">
-          {total.toLocaleString()} free photos for &ldquo;{keyword}&rdquo;
+          {total.toLocaleString()} free photo{total !== 1 ? "s" : ""}
+          {keyword ? <> for &ldquo;{keyword}&rdquo;</> : ""}
         </p>
       )}
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
@@ -514,7 +521,8 @@ function VideoResults({
     <>
       {total > 0 && (
         <p className="text-caption text-surface-500 mb-5">
-          {total.toLocaleString()} free videos for &ldquo;{keyword}&rdquo;
+          {total.toLocaleString()} free video{total !== 1 ? "s" : ""}
+          {keyword ? <> for &ldquo;{keyword}&rdquo;</> : ""}
         </p>
       )}
       <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>

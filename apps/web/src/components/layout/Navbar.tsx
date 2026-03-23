@@ -11,7 +11,7 @@ import NotificationDropdown from "@/components/ui/NotificationDropdown";
 
 const NAV_LINKS = [
   { href: "/discover", label: "Explore" },
-  { href: "/search/videos", label: "Videos" },
+  { href: "/search?tab=videos", label: "Videos" },
   { href: "/collections", label: "Collections" },
   { href: "/challenges", label: "Challenges" },
   { href: "/leaderboard", label: "Leaderboard" },

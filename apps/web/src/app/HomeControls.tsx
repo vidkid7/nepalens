@@ -31,7 +31,7 @@ export default function HomeControls({ sort = "curated" }: HomeControlsProps) {
             Photos
           </Link>
           <Link
-            href="/search/videos"
+            href="/search?tab=videos"
             className="px-5 py-3.5 text-caption font-medium border-b-2 border-transparent text-surface-500 hover:text-surface-700 hover:border-surface-300 transition-colors"
           >
             <span className="mr-1.5">🎬</span>
