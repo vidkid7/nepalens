@@ -529,6 +529,13 @@ function VideoCard({ video }: { video: VideoResult }) {
     }
   };
 
+  // Trigger load when hover starts so the browser fetches the video
+  useEffect(() => {
+    if (isHovered && videoRef.current && video.videoUrl) {
+      videoRef.current.load();
+    }
+  }, [isHovered, video.videoUrl]);
+
   // Play when video is loaded and we're still hovering
   useEffect(() => {
     if (isHovered && isVideoReady && videoRef.current) {

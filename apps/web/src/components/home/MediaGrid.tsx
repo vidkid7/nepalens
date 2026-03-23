@@ -49,6 +49,13 @@ function VideoCard({ item }: { item: MediaItem }) {
     }
   }, []);
 
+  // Trigger load when hover starts so the browser fetches the video
+  useEffect(() => {
+    if (isHovering && videoRef.current && item.videoUrl) {
+      videoRef.current.load();
+    }
+  }, [isHovering, item.videoUrl]);
+
   // Auto-play when hovering and video is ready
   useEffect(() => {
     if (isHovering && isVideoReady && videoRef.current) {

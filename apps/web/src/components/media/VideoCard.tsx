@@ -64,7 +64,14 @@ export default function VideoCard({ video }: VideoCardProps) {
     }
   };
 
-  // Play video when it's ready and we're still hovering
+  // Trigger load when hover starts so the browser fetches the video
+  useEffect(() => {
+    if (isHovered && videoRef.current && video.videoUrl) {
+      videoRef.current.load();
+    }
+  }, [isHovered, video.videoUrl]);
+
+  // Play video when it's loaded and we're still hovering
   useEffect(() => {
     if (isHovered && isVideoReady && videoRef.current) {
       videoRef.current.currentTime = 0;
