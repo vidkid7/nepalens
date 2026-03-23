@@ -100,7 +100,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <>
       {/* ── Cinematic Hero ── */}
-      <section className="relative min-h-[480px] sm:min-h-[560px] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[520px] sm:min-h-[600px] lg:min-h-[640px] flex items-center justify-center overflow-hidden">
         {heroUrl && (
           <img
             src={heroUrl}
@@ -109,15 +109,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             fetchPriority="high"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
 
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
+        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto pt-20 pb-8">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
             Where creativity<br className="hidden sm:block" />
             <span className="text-brand-400"> finds its canvas.</span>
           </h1>
-          <p className="mt-4 text-lg sm:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-            Discover stunning photos and videos shared by talented creators worldwide — all free to download and use.
+          <p className="mt-4 text-base sm:text-lg text-white/80 max-w-xl mx-auto leading-relaxed">
+            Discover stunning photos and videos shared by talented creators
+            worldwide — all free to download and use.
           </p>
 
           <div className="mt-8 flex justify-center">

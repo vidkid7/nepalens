@@ -50,7 +50,7 @@ export default function Navbar() {
       <header
         className={`fixed top-0 left-0 right-0 z-fixed transition-all duration-300 ${
           showTransparent
-            ? "bg-gradient-to-b from-black/30 to-transparent"
+            ? "bg-gradient-to-b from-black/50 via-black/25 to-transparent"
             : "bg-white border-b border-surface-200 shadow-xs"
         }`}
       >
