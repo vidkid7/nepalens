@@ -293,7 +293,7 @@ export default function SearchPageClient({ keyword, initialFilters }: SearchPage
                     }`}
                   >
                     {labels[key]}
-                    {keyword && count > 0 && (
+                    {count > 0 && (
                       <span className="ml-1.5 text-micro text-surface-400">
                         {count.toLocaleString()}
                       </span>
@@ -396,17 +396,7 @@ export default function SearchPageClient({ keyword, initialFilters }: SearchPage
 
       {/* Results */}
       <section className="container-app py-6">
-        {!keyword ? (
-          <EmptyState
-            icon={
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            }
-            title="Enter a search term"
-            description="Search for free stock photos, videos, and creators"
-          />
-        ) : initialLoading ? (
+        {initialLoading ? (
           tab === "users" ? (
             <UsersSkeleton />
           ) : (
@@ -419,8 +409,8 @@ export default function SearchPageClient({ keyword, initialFilters }: SearchPage
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             }
-            title={`No ${tab} found for "${keyword}"`}
-            description="Try different keywords or remove search filters"
+            title={keyword ? `No ${tab} found for "${keyword}"` : `No ${tab} found`}
+            description={keyword ? "Try different keywords or remove search filters" : "Check back later for new content"}
             action={
               <a href="/discover" className="btn btn-sm btn-primary">
                 Explore trending

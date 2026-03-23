@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
               ],
             },
           })
-        : 0,
+        : prisma.user.count({ where: { isBanned: false } }),
     ]);
 
     const counts = { photos: photoCount, videos: videoCount, users: userCount };
