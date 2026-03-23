@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
+  output: process.env.NODE_ENV === "production" || process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
   transpilePackages: [
     "@nepalens/database",
     "@nepalens/search",

@@ -10,6 +10,7 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
+    "postinstall": "npx prisma generate --schema=packages/database/prisma/schema.prisma",
     "db:generate": "npm run generate --workspace=@nepalens/database",
     "db:migrate": "npm run migrate --workspace=@nepalens/database",
     "db:seed": "npm run seed --workspace=@nepalens/database",
