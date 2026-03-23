@@ -5,7 +5,7 @@ import MasonryGrid from "@/components/media/MasonryGrid";
 import InfiniteScroll from "@/components/ui/InfiniteScroll";
 import { MasonryGridSkeleton } from "@/components/ui/Skeleton";
 
-interface Photo {
+interface MediaItem {
   id: string;
   slug: string;
   alt: string | null;
@@ -17,6 +17,9 @@ interface Photo {
   avg_color: string | null;
   blur_hash?: string | null;
   isPremium?: boolean;
+  mediaType?: "photo" | "video";
+  videoUrl?: string | null;
+  duration?: number | null;
 }
 
 interface HomeFeedProps {
@@ -24,7 +27,7 @@ interface HomeFeedProps {
 }
 
 export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [items, setItems] = useState<MediaItem[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -44,16 +47,16 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
     return () => window.removeEventListener("resize", updateColumns);
   }, []);
 
-  const fetchPhotos = useCallback(async (pageNum: number) => {
+  const fetchFeed = useCallback(async (pageNum: number) => {
     try {
-      const res = await fetch(`/api/internal/photos?page=${pageNum}&per_page=30&sort=${sort}`);
+      const res = await fetch(`/api/internal/feed?page=${pageNum}&per_page=30&sort=${sort}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setError(false);
-      return data.photos as Photo[];
+      return { items: data.items as MediaItem[], hasMore: data.hasMore };
     } catch {
       setError(true);
-      return [];
+      return { items: [], hasMore: false };
     }
   }, [sort]);
 
@@ -62,29 +65,29 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
     setPage(1);
     setHasMore(true);
     setError(false);
-    fetchPhotos(1).then((data) => {
-      setPhotos(data);
+    fetchFeed(1).then(({ items: data, hasMore: more }) => {
+      setItems(data);
       setLoading(false);
-      if (data.length < 30) setHasMore(false);
+      setHasMore(more);
     });
-  }, [fetchPhotos]);
+  }, [fetchFeed]);
 
   const loadMore = useCallback(async () => {
     if (loading) return;
     setLoading(true);
     const nextPage = page + 1;
-    const newPhotos = await fetchPhotos(nextPage);
-    setPhotos((prev) => [...prev, ...newPhotos]);
+    const { items: newItems, hasMore: more } = await fetchFeed(nextPage);
+    setItems((prev) => [...prev, ...newItems]);
     setPage(nextPage);
     setLoading(false);
-    if (newPhotos.length < 30) setHasMore(false);
-  }, [page, loading, fetchPhotos]);
+    setHasMore(more);
+  }, [page, loading, fetchFeed]);
 
-  if (photos.length === 0 && loading) {
+  if (items.length === 0 && loading) {
     return <MasonryGridSkeleton columns={columns} />;
   }
 
-  if (photos.length === 0 && error) {
+  if (items.length === 0 && error) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mb-4">
@@ -92,10 +95,10 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-surface-700 mb-1">Unable to load photos</h3>
+        <h3 className="text-lg font-semibold text-surface-700 mb-1">Unable to load content</h3>
         <p className="text-sm text-surface-500 mb-4">Something went wrong. Please try again.</p>
         <button
-          onClick={() => { setError(false); setLoading(true); fetchPhotos(1).then(d => { setPhotos(d); setLoading(false); }); }}
+          onClick={() => { setError(false); setLoading(true); fetchFeed(1).then(({ items: d }) => { setItems(d); setLoading(false); }); }}
           className="btn btn-sm btn-brand"
         >
           Try again
@@ -104,7 +107,7 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
     );
   }
 
-  if (photos.length === 0 && !loading) {
+  if (items.length === 0 && !loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mb-4">
@@ -112,7 +115,7 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-surface-700 mb-1">No photos yet</h3>
+        <h3 className="text-lg font-semibold text-surface-700 mb-1">No content yet</h3>
         <p className="text-sm text-surface-500">Be the first to share your work with the community.</p>
       </div>
     );
@@ -120,7 +123,7 @@ export default function HomeFeed({ sort = "curated" }: HomeFeedProps) {
 
   return (
     <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} loading={loading}>
-      <MasonryGrid photos={photos} columns={columns} />
+      <MasonryGrid photos={items} columns={columns} />
     </InfiniteScroll>
   );
 }

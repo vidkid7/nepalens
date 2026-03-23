@@ -2,26 +2,33 @@
 
 import { useMemo, useRef, useEffect, useState } from "react";
 import PhotoCard from "./PhotoCard";
+import VideoCard from "./VideoCard";
+
+interface MediaItem {
+  id: string;
+  slug: string;
+  alt: string | null;
+  width: number;
+  height: number;
+  src: { large: string };
+  photographer: string;
+  photographer_url: string;
+  avg_color: string | null;
+  blur_hash?: string | null;
+  isPremium?: boolean;
+  // Video-specific fields
+  mediaType?: "photo" | "video";
+  videoUrl?: string | null;
+  duration?: number | null;
+}
 
 interface MasonryGridProps {
-  photos: Array<{
-    id: string;
-    slug: string;
-    alt: string | null;
-    width: number;
-    height: number;
-    src: { large: string };
-    photographer: string;
-    photographer_url: string;
-    avg_color: string | null;
-    blur_hash?: string | null;
-    isPremium?: boolean;
-  }>;
+  photos: MediaItem[];
   columns?: number;
   gap?: number;
 }
 
-function AnimatedCard({ photo, index }: { photo: MasonryGridProps["photos"][0]; index: number }) {
+function AnimatedCard({ item, index }: { item: MediaItem; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -51,25 +58,29 @@ function AnimatedCard({ photo, index }: { photo: MasonryGridProps["photos"][0]; 
         transition: `opacity 0.5s ease ${(index % 4) * 0.06}s, transform 0.5s ease ${(index % 4) * 0.06}s`,
       }}
     >
-      <PhotoCard photo={photo} />
+      {item.mediaType === "video" ? (
+        <VideoCard video={item} />
+      ) : (
+        <PhotoCard photo={item} />
+      )}
     </div>
   );
 }
 
 export default function MasonryGrid({ photos, columns = 3, gap = 16 }: MasonryGridProps) {
   const columnItems = useMemo(() => {
-    const result: { photo: (typeof photos)[0]; globalIndex: number }[][] = Array.from(
+    const result: { item: MediaItem; globalIndex: number }[][] = Array.from(
       { length: columns },
       () => []
     );
     const heights = new Array(columns).fill(0);
 
-    photos.forEach((photo, i) => {
+    photos.forEach((item, i) => {
       const shortestCol = heights.indexOf(Math.min(...heights));
       if (shortestCol < 0 || shortestCol >= columns) return;
-      result[shortestCol].push({ photo, globalIndex: i });
-      const w = photo.width || 1;
-      const h = photo.height || 1;
+      result[shortestCol].push({ item, globalIndex: i });
+      const w = item.width || 1;
+      const h = item.height || 1;
       heights[shortestCol] += h / w;
     });
 
@@ -80,8 +91,8 @@ export default function MasonryGrid({ photos, columns = 3, gap = 16 }: MasonryGr
     <div className="flex" style={{ gap }}>
       {columnItems.map((col, i) => (
         <div key={i} className="flex-1 flex flex-col" style={{ gap }}>
-          {col.map(({ photo, globalIndex }) => (
-            <AnimatedCard key={photo.id} photo={photo} index={globalIndex} />
+          {col.map(({ item, globalIndex }) => (
+            <AnimatedCard key={item.id} item={item} index={globalIndex} />
           ))}
         </div>
       ))}

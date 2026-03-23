@@ -42,3 +42,6 @@ packages/database/prisma/migrations/
 postgres_data/
 minio_data/
 elasticsearch_data/
+
+stock videos/
+stock imges/
