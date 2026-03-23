@@ -126,7 +126,7 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
     >
       <Link href={`/photo/${photo.slug}-${photo.id}`} className="block">
         <BlurHashImage
-          src={photo.src.large}
+          src={photo.src?.large || ""}
           alt={photo.alt || "Photo"}
           width={photo.width}
           height={photo.height}

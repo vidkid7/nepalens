@@ -134,7 +134,7 @@ export default function VideoCard({ video }: VideoCardProps) {
         <div style={{ paddingBottom: `${(1 / aspectRatio) * 100}%` }} className="relative bg-surface-900">
           {/* Thumbnail */}
           <img
-            src={video.src.large}
+            src={video.src?.large || ""}
             alt={video.alt || "Video"}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
               isHovered && isVideoReady ? "opacity-0" : "opacity-100"

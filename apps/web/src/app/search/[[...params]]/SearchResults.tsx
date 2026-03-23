@@ -226,7 +226,7 @@ export default function SearchPageClient({ keyword, initialFilters }: SearchPage
       setInitialLoading(false);
       if (data.length < 30) setHasMore(false);
     });
-  }, [keyword, fetchResults]);
+  }, [keyword, tab, fetchResults]);
 
   const loadMore = useCallback(async () => {
     if (loading) return;
