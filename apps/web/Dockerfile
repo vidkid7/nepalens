@@ -16,7 +16,10 @@ COPY packages/search/package.json ./packages/search/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY packages/storage/package.json ./packages/storage/package.json
 
-RUN npm ci --ignore-scripts
+# Copy prisma schema so postinstall can generate client
+COPY packages/database/prisma/schema.prisma ./packages/database/prisma/schema.prisma
+
+RUN npm ci
 
 # ── Stage 2: Build ──
 FROM node:20-alpine AS builder
@@ -24,9 +27,10 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/database/node_modules ./packages/database/node_modules
 COPY . .
 
-# Generate Prisma client (use local installed version, not npx which pulls latest)
+# Regenerate Prisma client with full source
 RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma
 
 # Build all packages then the web app
