@@ -508,17 +508,12 @@ function VideoCard({ video }: { video: VideoResult }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
-  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
-    // Small delay to avoid triggering on quick mouse passes
     hoverTimer.current = setTimeout(() => {
       setIsHovered(true);
-      if (videoRef.current && video.videoUrl) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(() => {});
-      }
-    }, 300);
+    }, 200);
   };
 
   const handleMouseLeave = () => {
@@ -533,6 +528,14 @@ function VideoCard({ video }: { video: VideoResult }) {
       videoRef.current.currentTime = 0;
     }
   };
+
+  // Play when video is loaded and we're still hovering
+  useEffect(() => {
+    if (isHovered && isVideoReady && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [isHovered, isVideoReady]);
 
   return (
     <Link

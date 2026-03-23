@@ -218,7 +218,9 @@ function buildPhotoWhere(q: string, orientation: string, size: string, color: st
     where.OR = [
       { altText: { contains: q, mode: "insensitive" } },
       { description: { contains: q, mode: "insensitive" } },
+      { slug: { contains: q, mode: "insensitive" } },
       { tags: { some: { tag: { name: { contains: q, mode: "insensitive" } } } } },
+      { tags: { some: { tag: { slug: { contains: q, mode: "insensitive" } } } } },
     ];
   }
 
@@ -291,7 +293,9 @@ function buildVideoWhere(q: string, orientation: string) {
     where.OR = [
       { altText: { contains: q, mode: "insensitive" } },
       { description: { contains: q, mode: "insensitive" } },
+      { slug: { contains: q, mode: "insensitive" } },
       { tags: { some: { tag: { name: { contains: q, mode: "insensitive" } } } } },
+      { tags: { some: { tag: { slug: { contains: q, mode: "insensitive" } } } } },
     ];
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
@@ -39,7 +39,7 @@ export default function VideoCard({ video }: VideoCardProps) {
   const [liked, setLiked] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
-  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { data: session } = useSession();
   const { toast } = useToast();
   const { isPro } = useSubscription();
@@ -48,11 +48,7 @@ export default function VideoCard({ video }: VideoCardProps) {
   const handleMouseEnter = () => {
     hoverTimer.current = setTimeout(() => {
       setIsHovered(true);
-      if (videoRef.current && video.videoUrl) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(() => {});
-      }
-    }, 300);
+    }, 200);
   };
 
   const handleMouseLeave = () => {
@@ -67,6 +63,14 @@ export default function VideoCard({ video }: VideoCardProps) {
       videoRef.current.currentTime = 0;
     }
   };
+
+  // Play video when it's ready and we're still hovering
+  useEffect(() => {
+    if (isHovered && isVideoReady && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [isHovered, isVideoReady]);
 
   const handleLike = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
