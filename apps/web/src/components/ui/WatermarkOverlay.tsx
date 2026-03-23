@@ -2,7 +2,7 @@
 
 /**
  * CSS-based watermark overlay that prevents screenshot theft.
- * Renders repeating "PixelStock" text diagonally across the image.
+ * Renders repeating "NepaLens" text diagonally across the image.
  * Cannot be removed via DevTools without breaking the layout.
  */
 export default function WatermarkOverlay({ className = "" }: { className?: string }) {
@@ -54,7 +54,7 @@ export default function WatermarkOverlay({ className = "" }: { className?: strin
               WebkitUserSelect: "none",
             }}
           >
-            PixelStock
+            NepaLens
           </span>
         ))}
       </div>
@@ -70,7 +70,7 @@ export default function WatermarkOverlay({ className = "" }: { className?: strin
             WebkitUserSelect: "none",
           }}
         >
-          PixelStock
+          NepaLens
         </div>
       </div>
     </div>

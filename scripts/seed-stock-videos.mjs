@@ -81,7 +81,7 @@ const VIDEOS = [
 // ── Cloudinary signed upload ──
 function uploadToCloudinary(filePath) {
   const timestamp = Math.floor(Date.now() / 1000);
-  const folder = "pixelstock/videos";
+  const folder = "nepalens/videos";
   const toSign = `folder=${folder}&timestamp=${timestamp}${API_SECRET}`;
   const signature = crypto.createHash("sha1").update(toSign).digest("hex");
 

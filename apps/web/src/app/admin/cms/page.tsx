@@ -664,7 +664,7 @@ export default function AdminCmsPage() {
                 <label className="form-label">Default Meta Title Template</label>
                 <input
                   className="input"
-                  placeholder="{{page_title}} | PixelStock — Free Stock Photos"
+                  placeholder="{{page_title}} | NepaLens — Free Stock Photos"
                   disabled
                 />
                 <p className="text-micro text-surface-400 mt-1">Use {"{{page_title}}"} as a placeholder for dynamic page titles</p>
@@ -674,7 +674,7 @@ export default function AdminCmsPage() {
                 <textarea
                   className="input min-h-[80px]"
                   rows={3}
-                  placeholder="Browse millions of free stock photos on PixelStock. {{page_description}}"
+                  placeholder="Browse millions of free stock photos on NepaLens. {{page_description}}"
                   disabled
                 />
               </div>

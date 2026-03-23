@@ -22,7 +22,7 @@ function getTransporter(): Transporter {
 }
 
 function getFromAddress(): string {
-  return process.env.EMAIL_FROM || "PixelStock <noreply@pixelstock.com>";
+  return process.env.EMAIL_FROM || "NepaLens <noreply@nepalens.com>";
 }
 
 // ── Template types ─────────────────────────────────────────────────
@@ -44,7 +44,7 @@ interface RenderedEmail {
 // ── Shared styles ──────────────────────────────────────────────────
 
 const BRAND_COLOR = "#2563eb";
-const BRAND_NAME = "PixelStock";
+const BRAND_NAME = "NepaLens";
 
 function wrapHtml(title: string, bodyContent: string): string {
   return `<!DOCTYPE html>
@@ -116,7 +116,7 @@ function renderTemplate(
 
 function renderWelcome(data: Record<string, any>): RenderedEmail {
   const name = data.name || "there";
-  const dashboardUrl = data.dashboardUrl || "https://pixelstock.com/dashboard";
+  const dashboardUrl = data.dashboardUrl || "https://nepalens.com/dashboard";
 
   return {
     subject: `Welcome to ${BRAND_NAME}! 🎉`,
@@ -148,20 +148,20 @@ function renderWelcome(data: Record<string, any>): RenderedEmail {
 
 function renderUploadApproved(data: Record<string, any>): RenderedEmail {
   const title = data.title || "Your upload";
-  const mediaUrl = data.mediaUrl || "https://pixelstock.com";
+  const mediaUrl = data.mediaUrl || "https://nepalens.com";
 
   return {
     subject: `Your upload "${title}" has been approved! ✅`,
     html: wrapHtml(
       "Upload Approved",
       paragraph(`Great news! Your upload <strong>"${title}"</strong> has been reviewed and approved by our team.`) +
-      paragraph("It's now live on PixelStock and available for the community to discover, download, and enjoy.") +
+      paragraph("It's now live on NepaLens and available for the community to discover, download, and enjoy.") +
       button("View Your Upload", mediaUrl),
     ),
     text: [
       `Your upload "${title}" has been approved!`,
       "",
-      "It's now live on PixelStock and available for the community to discover, download, and enjoy.",
+      "It's now live on NepaLens and available for the community to discover, download, and enjoy.",
       "",
       `View it here: ${mediaUrl}`,
     ].join("\n"),
@@ -171,7 +171,7 @@ function renderUploadApproved(data: Record<string, any>): RenderedEmail {
 function renderUploadRejected(data: Record<string, any>): RenderedEmail {
   const title = data.title || "Your upload";
   const reason = data.reason || "It did not meet our quality guidelines.";
-  const editUrl = data.editUrl || "https://pixelstock.com/dashboard/uploads";
+  const editUrl = data.editUrl || "https://nepalens.com/dashboard/uploads";
 
   return {
     subject: `Your upload "${title}" needs changes`,
@@ -196,8 +196,8 @@ function renderUploadRejected(data: Record<string, any>): RenderedEmail {
 
 function renderNewFollower(data: Record<string, any>): RenderedEmail {
   const followerName = data.followerName || "Someone";
-  const followerUrl = data.followerUrl || "https://pixelstock.com";
-  const profileUrl = data.profileUrl || "https://pixelstock.com/dashboard";
+  const followerUrl = data.followerUrl || "https://nepalens.com";
+  const profileUrl = data.profileUrl || "https://nepalens.com/dashboard";
 
   return {
     subject: `${followerName} started following you on ${BRAND_NAME}`,
@@ -222,7 +222,7 @@ function renderContentReported(data: Record<string, any>): RenderedEmail {
   const mediaTitle = data.mediaTitle || "Untitled";
   const reportReason = data.reportReason || "Community guidelines violation";
   const reporterName = data.reporterName || "A user";
-  const adminUrl = data.adminUrl || "https://pixelstock.com/admin/reports";
+  const adminUrl = data.adminUrl || "https://nepalens.com/admin/reports";
 
   return {
     subject: `[Admin] Content reported: "${mediaTitle}"`,
@@ -255,7 +255,7 @@ function renderContentReported(data: Record<string, any>): RenderedEmail {
 
 function renderContributorApproved(data: Record<string, any>): RenderedEmail {
   const name = data.name || "there";
-  const uploadUrl = data.uploadUrl || "https://pixelstock.com/dashboard/upload";
+  const uploadUrl = data.uploadUrl || "https://nepalens.com/dashboard/upload";
 
   return {
     subject: `You're now a ${BRAND_NAME} contributor! 🎨`,

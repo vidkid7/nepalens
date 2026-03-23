@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock @pixelstock/database before imports
-vi.mock('@pixelstock/database', () => ({
+// Mock @nepalens/database before imports
+vi.mock('@nepalens/database', () => ({
   prisma: {
     photo: {
       findMany: vi.fn(),
@@ -38,7 +38,7 @@ vi.mock('@/lib/auth', () => ({
   authOptions: {},
 }));
 
-import { prisma } from '@pixelstock/database';
+import { prisma } from '@nepalens/database';
 import { getServerSession } from 'next-auth';
 
 // Import after mocks are set up

@@ -5,8 +5,8 @@ import * as path from "path";
 import * as os from "os";
 import * as crypto from "crypto";
 
-import { prisma } from "@pixelstock/database";
-import { downloadFromS3, uploadToS3, getCdnUrl } from "@pixelstock/storage";
+import { prisma } from "@nepalens/database";
+import { downloadFromS3, uploadToS3, getCdnUrl } from "@nepalens/storage";
 import { searchIndexQueue } from "../index";
 import type { ProcessVideoJob } from "../index";
 
@@ -168,7 +168,7 @@ async function createPreviewClip(
 // ── Temp directory helper ──────────────────────────────────────────
 
 function createTempDir(): string {
-  const dir = path.join(os.tmpdir(), `pixelstock-video-${crypto.randomUUID()}`);
+  const dir = path.join(os.tmpdir(), `nepalens-video-${crypto.randomUUID()}`);
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }

@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           </section>
           <section>
             <h2 className="text-title text-surface-900 mb-3">Contact</h2>
-            <p className="text-body text-surface-600 leading-relaxed">For privacy-related inquiries, please contact us at privacy@pixelstock.com.</p>
+            <p className="text-body text-surface-600 leading-relaxed">For privacy-related inquiries, please contact us at privacy@nepalens.com.</p>
           </section>
         </div>
       </div>

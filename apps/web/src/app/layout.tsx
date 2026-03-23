@@ -9,15 +9,15 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "PixelStock — Free Stock Photos & Videos",
-    template: "%s | PixelStock",
+    default: "NepaLens — Free Stock Photos & Videos",
+    template: "%s | NepaLens",
   },
   description:
     "The best free stock photos, royalty-free images & videos shared by creators.",
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "PixelStock",
+    siteName: "NepaLens",
   },
 };
 

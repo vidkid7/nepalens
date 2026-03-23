@@ -1,4 +1,4 @@
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 
 export interface ActiveSubscription {
   id: string;

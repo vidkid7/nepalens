@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";

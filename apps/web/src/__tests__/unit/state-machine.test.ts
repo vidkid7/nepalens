@@ -3,7 +3,7 @@ import {
   CONTENT_STATES,
   STATE_TRANSITIONS,
   isValidTransition,
-} from "@pixelstock/shared";
+} from "@nepalens/shared";
 
 describe("Content State Machine", () => {
   describe("CONTENT_STATES", () => {

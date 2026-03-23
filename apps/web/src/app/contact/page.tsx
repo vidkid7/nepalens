@@ -154,10 +154,10 @@ export default function ContactPage() {
             <div className="card p-5">
               <h3 className="text-label text-surface-900 mb-2">Email Us</h3>
               <a
-                href="mailto:support@pixelstock.com"
+                href="mailto:support@nepalens.com"
                 className="text-body text-brand hover:text-brand-600 transition-colors"
               >
-                support@pixelstock.com
+                support@nepalens.com
               </a>
             </div>
 

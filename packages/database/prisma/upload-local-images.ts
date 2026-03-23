@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 // MinIO/S3 configuration from .env
 const S3_ENDPOINT = process.env.S3_ENDPOINT || "http://localhost:9000";
-const S3_BUCKET = process.env.S3_BUCKET || "pixelstock-media";
+const S3_BUCKET = process.env.S3_BUCKET || "nepalens-media";
 const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY || "minioadmin";
 const S3_SECRET_KEY = process.env.S3_SECRET_KEY || "minioadmin";
 
@@ -176,7 +176,7 @@ async function main() {
     photographer = await prisma.user.create({
       data: {
         username: "nature_explorer",
-        email: "nature@pixelstock.app",
+        email: "nature@nepalens.app",
         passwordHash: pw,
         displayName: "Nature Explorer",
         bio: "Professional nature and landscape photographer",

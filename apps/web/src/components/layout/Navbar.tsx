@@ -63,7 +63,7 @@ export default function Navbar() {
               </svg>
             </div>
             <span className={`text-lg font-bold hidden sm:block transition-colors ${showTransparent ? "text-white" : "text-surface-900"}`}>
-              PixelStock
+              NepaLens
             </span>
           </Link>
 

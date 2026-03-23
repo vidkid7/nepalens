@@ -1,5 +1,5 @@
 {
-  "name": "pixelstock",
+  "name": "nepalens",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -10,10 +10,10 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
-    "db:generate": "npm run generate --workspace=@pixelstock/database",
-    "db:migrate": "npm run migrate --workspace=@pixelstock/database",
-    "db:seed": "npm run seed --workspace=@pixelstock/database",
-    "db:push": "npm run push --workspace=@pixelstock/database"
+    "db:generate": "npm run generate --workspace=@nepalens/database",
+    "db:migrate": "npm run migrate --workspace=@nepalens/database",
+    "db:seed": "npm run seed --workspace=@nepalens/database",
+    "db:push": "npm run push --workspace=@nepalens/database"
   },
   "devDependencies": {
     "redis-memory-server": "^0.16.0",

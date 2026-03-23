@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "DMCA & Copyright — PixelStock",
+  title: "DMCA & Copyright — NepaLens",
   description:
-    "PixelStock's DMCA policy — learn how to file a takedown notice, counter-notification, and our commitment to intellectual property rights.",
+    "NepaLens's DMCA policy — learn how to file a takedown notice, counter-notification, and our commitment to intellectual property rights.",
 };
 
 export default function DmcaPage() {
@@ -15,7 +15,7 @@ export default function DmcaPage() {
           DMCA &amp; Copyright
         </h1>
         <p className="text-body text-surface-500 mb-12">
-          PixelStock respects the intellectual property rights of others and
+          NepaLens respects the intellectual property rights of others and
           expects our users to do the same.
         </p>
 
@@ -34,7 +34,7 @@ export default function DmcaPage() {
                     Our Commitment
                   </h2>
                   <p className="text-body text-surface-600">
-                    We take copyright seriously. PixelStock complies with the
+                    We take copyright seriously. NepaLens complies with the
                     Digital Millennium Copyright Act (DMCA) and responds promptly
                     to valid takedown notices. If you believe your copyrighted
                     work has been uploaded without permission, we&apos;re here to
@@ -53,7 +53,7 @@ export default function DmcaPage() {
               Filing a DMCA Takedown Notice
             </h2>
             <p className="text-body text-surface-600 leading-relaxed mb-4">
-              If you believe that content on PixelStock infringes your copyright,
+              If you believe that content on NepaLens infringes your copyright,
               please send a written notice to our designated DMCA agent with the
               following information:
             </p>
@@ -132,7 +132,7 @@ export default function DmcaPage() {
               Repeat Infringer Policy
             </h2>
             <p className="text-body text-surface-600 leading-relaxed">
-              PixelStock maintains a policy of terminating the accounts of users
+              NepaLens maintains a policy of terminating the accounts of users
               who are repeat infringers of copyright. We track DMCA notices and
               take appropriate action, including permanent removal of content
               and account suspension or termination for users who repeatedly
@@ -152,20 +152,20 @@ export default function DmcaPage() {
                 <span className="text-label text-surface-900">
                   Designated DMCA Agent:
                 </span>{" "}
-                PixelStock Legal Team
+                NepaLens Legal Team
               </p>
               <p className="text-body text-surface-600">
                 <span className="text-label text-surface-900">Email:</span>{" "}
                 <a
-                  href="mailto:dmca@pixelstock.com"
+                  href="mailto:dmca@nepalens.com"
                   className="text-brand hover:text-brand-600 transition-colors"
                 >
-                  dmca@pixelstock.com
+                  dmca@nepalens.com
                 </a>
               </p>
               <p className="text-body text-surface-600">
                 <span className="text-label text-surface-900">Address:</span>{" "}
-                PixelStock Inc., 123 Creator Lane, San Francisco, CA 94102
+                NepaLens Inc., 123 Creator Lane, San Francisco, CA 94102
               </p>
             </div>
           </section>

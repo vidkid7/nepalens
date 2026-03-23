@@ -103,7 +103,7 @@ export default function DownloadModal({
         }
 
         if (data.url) {
-          await triggerFileDownload(data.url, `pixelstock-${photo.id}-${variant.key}.jpg`);
+          await triggerFileDownload(data.url, `nepalens-${photo.id}-${variant.key}.jpg`);
           toast("Download started", "success");
           onClose();
         } else {
@@ -223,7 +223,7 @@ export default function DownloadModal({
           ? (isPro ? "Pro subscriber · Commercial license included" : "Pro subscription required to download premium photos")
           : isPro
             ? "Pro subscriber · All resolutions available"
-            : "Original quality requires Pro · PixelStock License"
+            : "Original quality requires Pro · NepaLens License"
         }
       </p>
 

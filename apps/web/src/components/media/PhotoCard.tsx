@@ -91,7 +91,7 @@ export default function PhotoCard({ photo }: PhotoCardProps) {
           return;
         }
         if (data.url) {
-          await triggerFileDownload(data.url, `pixelstock-${photo.slug}.jpg`);
+          await triggerFileDownload(data.url, `nepalens-${photo.slug}.jpg`);
           toast("Download started", "success");
         } else {
           toast(data.error || "Download link unavailable", "error");

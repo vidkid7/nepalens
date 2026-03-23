@@ -1,5 +1,5 @@
 {
-  "name": "@pixelstock/web",
+  "name": "@nepalens/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,11 +10,11 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@pixelstock/database": "*",
-    "@pixelstock/queue": "*",
-    "@pixelstock/search": "*",
-    "@pixelstock/shared": "*",
-    "@pixelstock/storage": "*",
+    "@nepalens/database": "*",
+    "@nepalens/queue": "*",
+    "@nepalens/search": "*",
+    "@nepalens/shared": "*",
+    "@nepalens/storage": "*",
     "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",

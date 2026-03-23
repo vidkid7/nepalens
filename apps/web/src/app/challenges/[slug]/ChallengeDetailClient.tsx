@@ -382,7 +382,7 @@ export default function ChallengeDetailClient({
                         2
                       </span>
                       <span>
-                        Upload your photo to PixelStock or select from your
+                        Upload your photo to NepaLens or select from your
                         existing photos.
                       </span>
                     </li>

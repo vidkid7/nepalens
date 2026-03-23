@@ -232,7 +232,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
           </svg>
         </div>
         <div className="min-w-0">
-          <p className="text-label text-white truncate">PixelStock</p>
+          <p className="text-label text-white truncate">NepaLens</p>
           <p className="text-micro text-surface-400 -mt-0.5">Admin Panel</p>
         </div>
       </div>

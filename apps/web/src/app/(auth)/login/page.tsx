@@ -54,7 +54,7 @@ function LoginForm() {
             </svg>
           </div>
           <h1 className="text-display text-surface-900">Welcome back</h1>
-          <p className="text-caption text-surface-500 mt-2">Log in to your PixelStock account</p>
+          <p className="text-caption text-surface-500 mt-2">Log in to your NepaLens account</p>
         </div>
 
         <div className="card p-6 sm:p-8">
@@ -134,7 +134,7 @@ function LoginForm() {
         <p className="text-center text-caption text-surface-500 mt-6">
           Don&apos;t have an account?{" "}
           <Link href="/register" className="text-brand font-medium hover:underline">
-            Join PixelStock
+            Join NepaLens
           </Link>
         </p>
       </div>

@@ -1,7 +1,7 @@
 import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import crypto from "crypto";
 
 async function verifyPassword(

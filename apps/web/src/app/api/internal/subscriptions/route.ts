@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 
 // GET — fetch subscription plans (public) or user's active subscription
 export async function GET(req: NextRequest) {

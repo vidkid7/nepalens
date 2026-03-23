@@ -1,4 +1,4 @@
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import Link from "next/link";
 import { Metadata } from "next";
 import Avatar from "@/components/ui/Avatar";
@@ -7,8 +7,8 @@ import { cached, CacheTTL } from "@/lib/cache";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Discover — PixelStock",
-  description: "Explore curated collections and featured photographers on PixelStock.",
+  title: "Discover — NepaLens",
+  description: "Explore curated collections and featured photographers on NepaLens.",
 };
 
 export default async function DiscoverPage() {

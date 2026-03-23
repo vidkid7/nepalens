@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { notFound } from "next/navigation";
 import VideoDetailClient from "./VideoDetailClient";
 
@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: VideoPageProps): Promise<Meta
   const title = video?.altText || video?.description || fallbackName || "Video";
 
   return {
-    title: `${title} — Free Stock Video | PixelStock`,
+    title: `${title} — Free Stock Video | NepaLens`,
     description: `Download this free video: ${title}. Free for personal and commercial use.`,
     openGraph: video?.thumbnailUrl
       ? {

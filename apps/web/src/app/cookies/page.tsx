@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy — PixelStock",
+  title: "Cookie Policy — NepaLens",
   description:
-    "Learn how PixelStock uses cookies and similar technologies to provide, improve, and secure our services.",
+    "Learn how NepaLens uses cookies and similar technologies to provide, improve, and secure our services.",
 };
 
 export default function CookiesPage() {
@@ -40,7 +40,7 @@ export default function CookiesPage() {
               How We Use Cookies
             </h2>
             <p className="text-body text-surface-600 leading-relaxed">
-              PixelStock uses cookies and similar tracking technologies to
+              NepaLens uses cookies and similar tracking technologies to
               provide, personalise, and improve our services. We use them to keep
               you signed in, remember your preferences, understand how you
               interact with our platform, and measure the effectiveness of our
@@ -88,7 +88,7 @@ export default function CookiesPage() {
                       Analytics Cookies
                     </h3>
                     <p className="text-body text-surface-500">
-                      Help us understand how visitors interact with PixelStock by
+                      Help us understand how visitors interact with NepaLens by
                       collecting information anonymously. This data lets us
                       improve our platform experience.
                     </p>
@@ -109,7 +109,7 @@ export default function CookiesPage() {
                       Preference Cookies
                     </h3>
                     <p className="text-body text-surface-500">
-                      Allow PixelStock to remember choices you make — such as
+                      Allow NepaLens to remember choices you make — such as
                       language, region, or display settings — so we can provide a
                       more personalised experience.
                     </p>
@@ -130,7 +130,7 @@ export default function CookiesPage() {
               Most web browsers allow you to control cookies through their
               settings. You can set your browser to refuse cookies or delete
               certain cookies. However, if you block or delete cookies, some
-              features of PixelStock may not work as intended.
+              features of NepaLens may not work as intended.
             </p>
             <p className="text-body text-surface-600 leading-relaxed">
               To learn more about managing cookies, visit your browser&apos;s

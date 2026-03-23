@@ -2,15 +2,15 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Help Center — PixelStock",
+  title: "Help Center — NepaLens",
   description:
-    "Get help with PixelStock — find answers, explore guides, and contact our support team.",
+    "Get help with NepaLens — find answers, explore guides, and contact our support team.",
 };
 
 const CATEGORIES = [
   {
     title: "Getting Started",
-    description: "New to PixelStock? Learn how to browse, download, and use free stock content.",
+    description: "New to NepaLens? Learn how to browse, download, and use free stock content.",
     href: "/faq",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,7 +20,7 @@ const CATEGORIES = [
   },
   {
     title: "Licensing & Usage",
-    description: "Understand what you can and can't do with content from PixelStock.",
+    description: "Understand what you can and can't do with content from NepaLens.",
     href: "/license",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@ const CATEGORIES = [
   },
   {
     title: "API & Developers",
-    description: "Integrate PixelStock into your app with our free REST API.",
+    description: "Integrate NepaLens into your app with our free REST API.",
     href: "/api-docs",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,10 +72,10 @@ const CATEGORIES = [
 ];
 
 const POPULAR_ARTICLES = [
-  { title: "What license does PixelStock use?", href: "/license" },
+  { title: "What license does NepaLens use?", href: "/license" },
   { title: "How to upload photos", href: "/contribute" },
   { title: "Can I use photos for commercial projects?", href: "/faq" },
-  { title: "Getting started with the PixelStock API", href: "/api-docs" },
+  { title: "Getting started with the NepaLens API", href: "/api-docs" },
   { title: "Understanding the DMCA process", href: "/dmca" },
   { title: "Privacy and data handling", href: "/privacy" },
 ];

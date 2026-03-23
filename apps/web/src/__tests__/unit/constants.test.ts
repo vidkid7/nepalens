@@ -11,7 +11,7 @@ import {
   PHOTO_STATUSES,
   VIDEO_QUALITIES,
   API_TIERS,
-} from '@pixelstock/shared';
+} from '@nepalens/shared';
 
 describe('CONTENT_STATES', () => {
   const expectedStates = [

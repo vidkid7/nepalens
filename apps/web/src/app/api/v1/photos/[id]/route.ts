@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { validateApiKey, apiErrorResponse } from "@/lib/apiAuth";
 
 // GET /api/v1/photos/[id]

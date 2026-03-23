@@ -344,25 +344,25 @@ const PHOTOGRAPHERS = [
   {
     username: "naturelens",
     displayName: "Nature Lens",
-    email: "naturelens@pixelstock.app",
+    email: "naturelens@nepalens.app",
     bio: "Landscape and nature photographer capturing the beauty of our planet. Based in the Pacific Northwest.",
   },
   {
     username: "wanderlight",
     displayName: "Wander Light",
-    email: "wanderlight@pixelstock.app",
+    email: "wanderlight@nepalens.app",
     bio: "Travel photographer and adventurer. Always chasing the light across wild landscapes.",
   },
   {
     username: "florashot",
     displayName: "Flora Shot",
-    email: "florashot@pixelstock.app",
+    email: "florashot@nepalens.app",
     bio: "Macro and botanical photographer. Finding beauty in petals, leaves, and the smallest details.",
   },
   {
     username: "peakframes",
     displayName: "Peak Frames",
-    email: "peakframes@pixelstock.app",
+    email: "peakframes@nepalens.app",
     bio: "Mountain and wilderness photographer. Capturing peaks, valleys, and everything in between.",
   },
 ];
@@ -412,7 +412,7 @@ const CATEGORIES = [
 ];
 
 async function main() {
-  console.log("🌱 Seeding PixelStock with real stock images...\n");
+  console.log("🌱 Seeding NepaLens with real stock images...\n");
 
   // Clean existing seed data (safe reset)
   // Fix polymorphic FK constraints (mediaId references both Photo and Video)
@@ -451,9 +451,9 @@ async function main() {
   const adminPassword = await hashPassword("Admin123!");
   const admin = await prisma.user.create({
     data: {
-      email: "admin@pixelstock.app",
+      email: "admin@nepalens.app",
       username: "admin",
-      displayName: "PixelStock Admin",
+      displayName: "NepaLens Admin",
       passwordHash: adminPassword,
       isVerified: true,
       isContributor: true,
@@ -693,7 +693,7 @@ async function main() {
   }
   console.log(`✅ User follower counts updated`);
 
-  console.log("\n🎉 Seed complete! Your PixelStock platform now has:");
+  console.log("\n🎉 Seed complete! Your NepaLens platform now has:");
   console.log(`   • ${createdPhotos.length} real stock photos`);
   console.log(`   • ${photographers.length} photographer profiles`);
   console.log(`   • ${COLLECTIONS.length} curated collections`);

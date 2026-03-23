@@ -8,11 +8,11 @@ export default function TermsPage() {
         <div className="space-y-8">
           <section>
             <h2 className="text-title text-surface-900 mb-3">1. Acceptance of Terms</h2>
-            <p className="text-body text-surface-600 leading-relaxed">By accessing or using PixelStock, you agree to be bound by these Terms of Service. If you do not agree, you may not use the platform.</p>
+            <p className="text-body text-surface-600 leading-relaxed">By accessing or using NepaLens, you agree to be bound by these Terms of Service. If you do not agree, you may not use the platform.</p>
           </section>
           <section>
             <h2 className="text-title text-surface-900 mb-3">2. Use of Content</h2>
-            <p className="text-body text-surface-600 leading-relaxed">All photos and videos on PixelStock are free to use. Original photographers and videographers have waived their rights to the work under our license. You can modify, copy, and distribute the content without asking for permission or providing attribution, though attribution is always appreciated.</p>
+            <p className="text-body text-surface-600 leading-relaxed">All photos and videos on NepaLens are free to use. Original photographers and videographers have waived their rights to the work under our license. You can modify, copy, and distribute the content without asking for permission or providing attribution, though attribution is always appreciated.</p>
           </section>
           <section>
             <h2 className="text-title text-surface-900 mb-3">3. Prohibited Uses</h2>
@@ -24,7 +24,7 @@ export default function TermsPage() {
           </section>
           <section>
             <h2 className="text-title text-surface-900 mb-3">5. Content Uploading</h2>
-            <p className="text-body text-surface-600 leading-relaxed">By uploading content, you grant PixelStock a non-exclusive, worldwide, royalty-free license to use, reproduce, modify, and distribute your content. You warrant that you own all rights to the content you upload.</p>
+            <p className="text-body text-surface-600 leading-relaxed">By uploading content, you grant NepaLens a non-exclusive, worldwide, royalty-free license to use, reproduce, modify, and distribute your content. You warrant that you own all rights to the content you upload.</p>
           </section>
           <section>
             <h2 className="text-title text-surface-900 mb-3">6. Termination</h2>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -51,7 +51,7 @@ export async function DELETE(
     try {
       for (const file of video.files) {
         if (file.cdnUrl?.includes("res.cloudinary.com")) {
-          const { deleteFromCloudinary } = await import("@pixelstock/storage");
+          const { deleteFromCloudinary } = await import("@nepalens/storage");
           // Extract key from Cloudinary URL
           const match = file.cdnUrl.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
           if (match) {

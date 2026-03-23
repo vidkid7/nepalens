@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "API Documentation — PixelStock",
+  title: "API Documentation — NepaLens",
   description:
-    "PixelStock API — free access to millions of stock photos and videos. Search, curate, and integrate high-quality media into your applications.",
+    "NepaLens API — free access to millions of stock photos and videos. Search, curate, and integrate high-quality media into your applications.",
 };
 
 function CodeBlock({ children }: { children: string }) {
@@ -68,16 +68,16 @@ const SAMPLE_RESPONSE = `{
       "id": 2014422,
       "width": 4000,
       "height": 6000,
-      "url": "https://pixelstock.com/photo/2014422",
+      "url": "https://nepalens.com/photo/2014422",
       "photographer": "Jane Doe",
-      "photographer_url": "https://pixelstock.com/@janedoe",
+      "photographer_url": "https://nepalens.com/@janedoe",
       "avg_color": "#6B8F71",
       "src": {
-        "original": "https://images.pixelstock.com/photos/2014422/original.jpeg",
-        "large2x": "https://images.pixelstock.com/photos/2014422/large2x.jpeg",
-        "large": "https://images.pixelstock.com/photos/2014422/large.jpeg",
-        "medium": "https://images.pixelstock.com/photos/2014422/medium.jpeg",
-        "small": "https://images.pixelstock.com/photos/2014422/small.jpeg"
+        "original": "https://images.nepalens.com/photos/2014422/original.jpeg",
+        "large2x": "https://images.nepalens.com/photos/2014422/large2x.jpeg",
+        "large": "https://images.nepalens.com/photos/2014422/large.jpeg",
+        "medium": "https://images.nepalens.com/photos/2014422/medium.jpeg",
+        "small": "https://images.nepalens.com/photos/2014422/small.jpeg"
       }
     }
   ]
@@ -89,7 +89,7 @@ export default function ApiDocsPage() {
       {/* Hero */}
       <div className="max-w-3xl mx-auto text-center mb-16">
         <div className="badge badge-brand mb-4">Free &amp; Open</div>
-        <h1 className="text-hero text-surface-900 mb-4">PixelStock API</h1>
+        <h1 className="text-hero text-surface-900 mb-4">NepaLens API</h1>
         <p className="text-subtitle text-surface-500 max-w-2xl mx-auto">
           Access millions of free stock photos and videos programmatically.
           Build beautiful apps, power your content, and delight your users.
@@ -102,7 +102,7 @@ export default function ApiDocsPage() {
           <section>
             <h2 className="text-title text-surface-900 mb-3">Overview</h2>
             <p className="text-body text-surface-600 leading-relaxed">
-              The PixelStock API provides a simple RESTful interface for
+              The NepaLens API provides a simple RESTful interface for
               searching, browsing, and downloading high-quality stock media. All
               responses are returned in JSON format. The API is free to use for
               both personal and commercial projects.
@@ -125,7 +125,7 @@ export default function ApiDocsPage() {
             </p>
             <CodeBlock>
               {`curl -H "Authorization: YOUR_API_KEY" \\
-  https://api.pixelstock.com/api/v1/curated`}
+  https://api.nepalens.com/api/v1/curated`}
             </CodeBlock>
             <p className="text-body text-surface-500 mt-4">
               You can generate an API key from your{" "}

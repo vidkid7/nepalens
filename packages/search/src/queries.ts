@@ -1,4 +1,4 @@
-import type { SearchFilters } from "@pixelstock/shared";
+import type { SearchFilters } from "@nepalens/shared";
 import {
   getElasticsearchClient,
   PHOTO_INDEX,

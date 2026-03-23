@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { notFound } from "next/navigation";
 import PhotoDetailClient from "./PhotoDetailClient";
 

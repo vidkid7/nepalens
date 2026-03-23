@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: [
-    "@pixelstock/database",
-    "@pixelstock/search",
-    "@pixelstock/shared",
-    "@pixelstock/storage",
-    "@pixelstock/queue",
+    "@nepalens/database",
+    "@nepalens/search",
+    "@nepalens/shared",
+    "@nepalens/storage",
+    "@nepalens/queue",
   ],
   images: {
     remotePatterns: [

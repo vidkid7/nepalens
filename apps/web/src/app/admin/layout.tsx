@@ -6,7 +6,7 @@ import AdminSidebar from "./AdminSidebar";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { default: "Admin Panel", template: "%s | Admin • PixelStock" },
+  title: { default: "Admin Panel", template: "%s | Admin • NepaLens" },
 };
 
 export default async function AdminLayout({

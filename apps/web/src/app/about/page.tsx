@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About — PixelStock",
+  title: "About — NepaLens",
   description:
-    "Learn about PixelStock — the free stock photo and video platform built by creators, for creators.",
+    "Learn about NepaLens — the free stock photo and video platform built by creators, for creators.",
 };
 
 const STATS = [
@@ -62,7 +62,7 @@ export default function AboutPage() {
     <div className="container-app py-16">
       {/* Hero */}
       <div className="max-w-3xl mx-auto text-center mb-16">
-        <h1 className="text-hero text-surface-900 mb-4">About PixelStock</h1>
+        <h1 className="text-hero text-surface-900 mb-4">About NepaLens</h1>
         <p className="text-subtitle text-surface-500 max-w-2xl mx-auto">
           The best free stock photos, royalty free images &amp; videos shared by
           a talented community of creators.
@@ -77,7 +77,7 @@ export default function AboutPage() {
             We believe that high-quality visuals should be accessible to
             everyone — whether you&apos;re a startup building a landing page, a
             student working on a project, or a non-profit telling an important
-            story. PixelStock exists to empower creators worldwide with free,
+            story. NepaLens exists to empower creators worldwide with free,
             stunning photography and video.
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function AboutPage() {
         <h2 className="text-title text-surface-900 mb-3">Our Story</h2>
         <div className="space-y-4 text-body text-surface-600 leading-relaxed">
           <p>
-            PixelStock was founded by creators who were frustrated by the state
+            NepaLens was founded by creators who were frustrated by the state
             of stock photography — expensive licenses, generic imagery, and
             restrictive terms. We knew there had to be a better way.
           </p>
@@ -151,7 +151,7 @@ export default function AboutPage() {
         </h2>
         <p className="text-body text-surface-500 mb-6">
           Share your photography with millions of people worldwide. Become a
-          PixelStock contributor today.
+          NepaLens contributor today.
         </p>
         <Link href="/contribute" className="btn btn-lg btn-primary">
           Become a Contributor

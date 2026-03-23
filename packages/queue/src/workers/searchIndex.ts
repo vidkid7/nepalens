@@ -1,5 +1,5 @@
-import { prisma } from "@pixelstock/database";
-import { indexPhoto, indexVideo, deleteFromIndex, PHOTO_INDEX, VIDEO_INDEX } from "@pixelstock/search";
+import { prisma } from "@nepalens/database";
+import { indexPhoto, indexVideo, deleteFromIndex, PHOTO_INDEX, VIDEO_INDEX } from "@nepalens/search";
 import type { SearchIndexJob } from "../index";
 
 export async function processSearchIndex(job: { data: SearchIndexJob }): Promise<void> {

@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FAQ — PixelStock",
+  title: "FAQ — NepaLens",
   description:
-    "Frequently asked questions about PixelStock — licensing, contributing, accounts, API, and more.",
+    "Frequently asked questions about NepaLens — licensing, contributing, accounts, API, and more.",
 };
 
 export default function FaqLayout({

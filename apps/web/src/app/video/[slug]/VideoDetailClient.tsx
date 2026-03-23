@@ -197,7 +197,7 @@ export default function VideoDetailClient({
             const blobUrl = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = blobUrl;
-            a.download = `pixelstock-${video.slug}-${quality}.mp4`;
+            a.download = `nepalens-${video.slug}-${quality}.mp4`;
             a.style.display = "none";
             document.body.appendChild(a);
             a.click();
@@ -207,7 +207,7 @@ export default function VideoDetailClient({
             const blobUrl = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = blobUrl;
-            a.download = `pixelstock-${video.slug}-${quality}.mp4`;
+            a.download = `nepalens-${video.slug}-${quality}.mp4`;
             a.style.display = "none";
             document.body.appendChild(a);
             a.click();

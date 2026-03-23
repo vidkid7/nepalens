@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact — PixelStock",
+  title: "Contact — NepaLens",
   description:
-    "Get in touch with the PixelStock team. We're here to help with questions, support, partnerships, and more.",
+    "Get in touch with the NepaLens team. We're here to help with questions, support, partnerships, and more.",
 };
 
 export default function ContactLayout({

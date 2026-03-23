@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -49,7 +49,7 @@ export async function DELETE(
     // Try to delete from Cloudinary (non-blocking)
     try {
       if (photo.cdnKey || photo.originalUrl?.includes("res.cloudinary.com")) {
-        const { deleteFromCloudinary } = await import("@pixelstock/storage");
+        const { deleteFromCloudinary } = await import("@nepalens/storage");
         if (photo.cdnKey) {
           await deleteFromCloudinary(photo.cdnKey);
         }

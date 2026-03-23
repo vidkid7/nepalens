@@ -79,7 +79,7 @@ function RegisterForm() {
               <path d="M2 7h3v9H2V7zm5.5-3h3v12h-3V4zM13 10h3v6h-3v-6z" fill="white" />
             </svg>
           </div>
-          <h1 className="text-display text-surface-900">Join PixelStock</h1>
+          <h1 className="text-display text-surface-900">Join NepaLens</h1>
           <p className="text-caption text-surface-500 mt-2">Create an account to start sharing and collecting</p>
         </div>
 

@@ -1,4 +1,4 @@
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import ProfileContent from "./ProfileContent";
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
 
   return {
     title: `${user.displayName || user.username} - Photographer`,
-    description: user.bio || `View photos and videos by ${user.displayName || user.username} on PixelStock.`,
+    description: user.bio || `View photos and videos by ${user.displayName || user.username} on NepaLens.`,
   };
 }
 

@@ -1,8 +1,8 @@
 import Sharp from "sharp";
 import { encode as blurhashEncode } from "blurhash";
-import { prisma } from "@pixelstock/database";
-import { downloadFromS3, uploadToS3, getCdnUrl } from "@pixelstock/storage";
-import { hexToColorBucket, getSizeTier } from "@pixelstock/shared";
+import { prisma } from "@nepalens/database";
+import { downloadFromS3, uploadToS3, getCdnUrl } from "@nepalens/storage";
+import { hexToColorBucket, getSizeTier } from "@nepalens/shared";
 import { searchIndexQueue } from "../index";
 import type { ProcessImageJob } from "../index";
 

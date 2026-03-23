@@ -1,4 +1,4 @@
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ChallengeDetailClient from "./ChallengeDetailClient";
@@ -10,10 +10,10 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const challenge = await prisma.challenge.findUnique({ where: { slug } });
-  if (!challenge) return { title: "Challenge Not Found \u2014 PixelStock" };
+  if (!challenge) return { title: "Challenge Not Found \u2014 NepaLens" };
   return {
-    title: `${challenge.title} \u2014 PixelStock Challenges`,
-    description: challenge.description?.slice(0, 160) || "Join this photography challenge on PixelStock.",
+    title: `${challenge.title} \u2014 NepaLens Challenges`,
+    description: challenge.description?.slice(0, 160) || "Join this photography challenge on NepaLens.",
   };
 }
 

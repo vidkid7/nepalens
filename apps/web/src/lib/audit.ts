@@ -1,4 +1,4 @@
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 
 export async function logAuditEvent({
   userId,

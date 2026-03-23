@@ -11,20 +11,20 @@ const FAQ_DATA: FaqCategory[] = [
     name: "General",
     items: [
       {
-        q: "What is PixelStock?",
-        a: "PixelStock is a free stock photo and video platform powered by a global community of creators. All content is free for personal and commercial use.",
+        q: "What is NepaLens?",
+        a: "NepaLens is a free stock photo and video platform powered by a global community of creators. All content is free for personal and commercial use.",
       },
       {
-        q: "Is PixelStock really free?",
-        a: "Yes! All photos and videos on PixelStock are 100% free to download and use. There are no hidden fees, subscriptions, or paywalls.",
+        q: "Is NepaLens really free?",
+        a: "Yes! All photos and videos on NepaLens are 100% free to download and use. There are no hidden fees, subscriptions, or paywalls.",
       },
       {
         q: "Do I need an account to download?",
         a: "No. You can browse and download content without creating an account. However, an account lets you save collections, follow creators, and upload your own work.",
       },
       {
-        q: "How does PixelStock make money?",
-        a: "PixelStock is supported through partnerships, our API program, and optional promoted placements. The core platform and all content remain free.",
+        q: "How does NepaLens make money?",
+        a: "NepaLens is supported through partnerships, our API program, and optional promoted placements. The core platform and all content remain free.",
       },
     ],
   },
@@ -32,12 +32,12 @@ const FAQ_DATA: FaqCategory[] = [
     name: "Licensing",
     items: [
       {
-        q: "Can I use PixelStock photos for commercial projects?",
-        a: "Absolutely. All content on PixelStock is free for commercial and personal use — including websites, apps, marketing materials, products, and more.",
+        q: "Can I use NepaLens photos for commercial projects?",
+        a: "Absolutely. All content on NepaLens is free for commercial and personal use — including websites, apps, marketing materials, products, and more.",
       },
       {
         q: "Do I need to give attribution?",
-        a: 'Attribution is not required, but it is always appreciated. A simple credit like "Photo by [Photographer] on PixelStock" helps support our community.',
+        a: 'Attribution is not required, but it is always appreciated. A simple credit like "Photo by [Photographer] on NepaLens" helps support our community.',
       },
       {
         q: "Can I modify the photos and videos?",
@@ -79,7 +79,7 @@ const FAQ_DATA: FaqCategory[] = [
       },
       {
         q: "How do I delete my account?",
-        a: "Go to Settings → Account and click \"Delete Account\". This will permanently remove your profile and all associated data. Your previously published content will remain on the platform under the PixelStock license.",
+        a: "Go to Settings → Account and click \"Delete Account\". This will permanently remove your profile and all associated data. Your previously published content will remain on the platform under the NepaLens license.",
       },
       {
         q: "I forgot my password. What do I do?",
@@ -91,7 +91,7 @@ const FAQ_DATA: FaqCategory[] = [
     name: "Technical",
     items: [
       {
-        q: "Does PixelStock have an API?",
+        q: "Does NepaLens have an API?",
         a: "Yes! Our free API lets you search and download photos and videos programmatically. Visit our API documentation to learn more and get your API key.",
       },
       {
@@ -162,7 +162,7 @@ export default function FaqPage() {
             Frequently Asked Questions
           </h1>
           <p className="text-subtitle text-surface-500 max-w-xl mx-auto mb-8">
-            Find answers to common questions about PixelStock.
+            Find answers to common questions about NepaLens.
           </p>
 
           {/* Search */}

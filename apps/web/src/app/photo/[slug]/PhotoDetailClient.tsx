@@ -102,7 +102,7 @@ export default function PhotoDetailClient({
         return;
       }
       if (data.url) {
-        await triggerFileDownload(data.url, `pixelstock-${photo.id}.jpg`);
+        await triggerFileDownload(data.url, `nepalens-${photo.id}.jpg`);
         toast("Download started", "success");
       } else {
         toast(data.error || "Download link unavailable", "error");

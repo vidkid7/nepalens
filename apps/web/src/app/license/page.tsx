@@ -1,15 +1,15 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "License — PixelStock",
-  description: "PixelStock photo and video license — free for commercial and personal use.",
+  title: "License — NepaLens",
+  description: "NepaLens photo and video license — free for commercial and personal use.",
 };
 
 export default function LicensePage() {
   return (
     <div className="container-app py-16">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-hero text-surface-900 mb-4">PixelStock License</h1>
+        <h1 className="text-hero text-surface-900 mb-4">NepaLens License</h1>
         <p className="text-body text-surface-500 mb-12">Simple, permissive, free for everyone.</p>
 
         <div className="bg-brand/5 border border-brand/20 rounded-2xl p-6 sm:p-8 mb-12">
@@ -20,8 +20,8 @@ export default function LicensePage() {
               </svg>
             </div>
             <div>
-              <h2 className="text-title text-surface-900 mb-2">All photos and videos on PixelStock are free to use.</h2>
-              <p className="text-body text-surface-600">Attribution is not required. Giving credit to the photographer or PixelStock is appreciated but not mandatory.</p>
+              <h2 className="text-title text-surface-900 mb-2">All photos and videos on NepaLens are free to use.</h2>
+              <p className="text-body text-surface-600">Attribution is not required. Giving credit to the photographer or NepaLens is appreciated but not mandatory.</p>
             </div>
           </div>
         </div>
@@ -37,7 +37,7 @@ export default function LicensePage() {
               <h2 className="text-title text-surface-900">What is allowed?</h2>
             </div>
             <ul className="space-y-3 text-body text-surface-600 ml-11">
-              <li>All photos and videos on PixelStock can be downloaded and used for free.</li>
+              <li>All photos and videos on NepaLens can be downloaded and used for free.</li>
               <li>Commercial and non-commercial purposes.</li>
               <li>No permission needed (though attribution is appreciated!).</li>
             </ul>
@@ -68,12 +68,12 @@ export default function LicensePage() {
           <section>
             <h2 className="text-title text-surface-900 mb-3">Long version</h2>
             <p className="text-body text-surface-600 leading-relaxed">
-              PixelStock grants you an irrevocable, nonexclusive, worldwide copyright
+              NepaLens grants you an irrevocable, nonexclusive, worldwide copyright
               license to download, copy, modify, distribute, perform, and use photos
-              and videos from PixelStock for free, including for commercial purposes,
-              without permission from or attributing the photographer or PixelStock.
+              and videos from NepaLens for free, including for commercial purposes,
+              without permission from or attributing the photographer or NepaLens.
               This license does not include the right to compile photos or videos from
-              PixelStock to replicate a similar or competing service.
+              NepaLens to replicate a similar or competing service.
             </p>
           </section>
         </div>

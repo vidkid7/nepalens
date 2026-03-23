@@ -13,8 +13,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@pixelstock/database': path.resolve(__dirname, '../../packages/database'),
-      '@pixelstock/shared': path.resolve(__dirname, '../../packages/shared'),
+      '@nepalens/database': path.resolve(__dirname, '../../packages/database'),
+      '@nepalens/shared': path.resolve(__dirname, '../../packages/shared'),
     },
   },
 });

@@ -42,7 +42,7 @@ const BENEFITS = [
       </svg>
     ),
     title: "Free Forever",
-    description: "No fees, no commissions, no catch. PixelStock is free for contributors and users alike.",
+    description: "No fees, no commissions, no catch. NepaLens is free for contributors and users alike.",
   },
 ];
 
@@ -73,12 +73,12 @@ const FAQS = [
   {
     question: "Is it really free to contribute?",
     answer:
-      "Yes — completely free. There are no sign-up fees, no commissions, and no hidden costs. PixelStock is a free platform for everyone.",
+      "Yes — completely free. There are no sign-up fees, no commissions, and no hidden costs. NepaLens is a free platform for everyone.",
   },
   {
     question: "Who can use my photos and videos?",
     answer:
-      "Content on PixelStock is available under a free-to-use license. Anyone can download and use your work for personal or commercial projects without attribution, though credits are always appreciated.",
+      "Content on NepaLens is available under a free-to-use license. Anyone can download and use your work for personal or commercial projects without attribution, though credits are always appreciated.",
   },
   {
     question: "Do I keep the copyright to my work?",
@@ -181,7 +181,7 @@ export default function ContributePage() {
 
         <p className="text-body sm:text-subtitle text-white/70 max-w-2xl mx-auto mt-6 leading-relaxed">
           Join thousands of photographers and videographers who share their
-          work on PixelStock — the free stock media platform built for creators.
+          work on NepaLens — the free stock media platform built for creators.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
@@ -208,7 +208,7 @@ export default function ContributePage() {
         <div className="text-center max-w-2xl mx-auto mb-14">
           <h2 className="text-display text-surface-900">Why Contribute?</h2>
           <p className="text-body text-surface-500 mt-3">
-            Whether you&apos;re a hobbyist or a professional, PixelStock gives your
+            Whether you&apos;re a hobbyist or a professional, NepaLens gives your
             work the audience it deserves.
           </p>
         </div>
@@ -341,7 +341,7 @@ export default function ContributePage() {
         </div>
         <h2 className="text-display text-surface-900">Your Rights, Protected</h2>
         <p className="text-body text-surface-500 mt-4 leading-relaxed max-w-2xl mx-auto">
-          When you upload to PixelStock, you grant a non-exclusive, royalty-free license
+          When you upload to NepaLens, you grant a non-exclusive, royalty-free license
           for others to use your content — but <strong className="text-surface-700">you retain full copyright</strong>.
           You can continue to license, sell, or display your work anywhere else.
         </p>

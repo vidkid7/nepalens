@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isProSubscriber } from "@/lib/subscription";
@@ -70,7 +70,7 @@ export async function GET(
     const contentType = upstream.headers.get("content-type") || "video/mp4";
     const contentLength = upstream.headers.get("content-length");
     const slug = video.slug || video.id;
-    const filename = `pixelstock-${slug}-${quality}.mp4`;
+    const filename = `nepalens-${slug}-${quality}.mp4`;
 
     const headers: Record<string, string> = {
       "Content-Type": contentType,

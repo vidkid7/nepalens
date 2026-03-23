@@ -193,7 +193,7 @@ export default function AdminSettingsPage() {
         <div className="card p-6">
           <h2 className="text-heading-4 text-surface-900 mb-4">Site Configuration</h2>
           <div className="space-y-1">
-            <InfoRow label="Site Name" value="PixelStock" />
+            <InfoRow label="Site Name" value="NepaLens" />
             <InfoRow label="Description" value="Free high-resolution stock photos & videos for everyone." />
             <InfoRow label="Tagline" value="Beautiful free images & video, gifted by creators." />
           </div>

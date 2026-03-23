@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const FOOTER_LINKS = {
-  PixelStock: [
+  NepaLens: [
     { label: "License", href: "/license" },
     { label: "API", href: "/api-docs" },
     { label: "Discover", href: "/discover" },
@@ -69,7 +69,7 @@ export default function Footer() {
               </svg>
             </div>
             <p className="text-micro text-surface-500">
-              © {new Date().getFullYear()} PixelStock. Free stock photos & videos shared by creators.
+              © {new Date().getFullYear()} NepaLens. Free stock photos & videos shared by creators.
             </p>
           </div>
 

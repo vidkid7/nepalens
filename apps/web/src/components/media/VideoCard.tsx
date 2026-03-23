@@ -108,7 +108,7 @@ export default function VideoCard({ video }: VideoCardProps) {
       } else if (!res.ok) {
         toast(data.error || "Download failed", "error");
       } else if (data.url) {
-        await triggerFileDownload(data.url, `pixelstock-${video.slug}.mp4`);
+        await triggerFileDownload(data.url, `nepalens-${video.slug}.mp4`);
         toast("Download started", "success");
       }
     } catch (err: any) { toast(err.message || "Download failed", "error"); }

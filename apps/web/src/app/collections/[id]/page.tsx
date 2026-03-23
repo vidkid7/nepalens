@@ -1,4 +1,4 @@
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -17,9 +17,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     where: { id },
     include: { user: { select: { displayName: true, username: true } } },
   });
-  if (!collection) return { title: "Collection Not Found \u2014 PixelStock" };
+  if (!collection) return { title: "Collection Not Found \u2014 NepaLens" };
   return {
-    title: `${collection.title} \u2014 PixelStock`,
+    title: `${collection.title} \u2014 NepaLens`,
     description: collection.description || `A curated collection by ${collection.user.displayName || collection.user.username}.`,
   };
 }

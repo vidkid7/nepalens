@@ -1,8 +1,8 @@
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { PricingPageClient } from "./pricing-client";
 
 export const metadata = {
-  title: "Pricing — PixelStock",
+  title: "Pricing — NepaLens",
   description: "Choose the perfect plan for your creative needs. From free downloads to unlimited commercial use.",
 };
 

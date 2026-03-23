@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isProSubscriber } from "@/lib/subscription";
@@ -140,7 +140,7 @@ export async function GET(
       outputBuffer[0] === 0xff && outputBuffer[1] === 0xd8;
     const contentType = isJpeg ? "image/jpeg" : "image/png";
 
-    const filename = `pixelstock-${photo.id}-${size}.jpg`;
+    const filename = `nepalens-${photo.id}-${size}.jpg`;
 
     return new NextResponse(new Uint8Array(outputBuffer), {
       status: 200,

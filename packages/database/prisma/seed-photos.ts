@@ -159,11 +159,11 @@ async function main() {
   // Create admin user
   const adminPassword = await hashPassword("admin123");
   const admin = await prisma.user.upsert({
-    where: { email: "admin@pixelstock.app" },
+    where: { email: "admin@nepalens.app" },
     update: {},
     create: {
       username: "admin",
-      email: "admin@pixelstock.app",
+      email: "admin@nepalens.app",
       passwordHash: adminPassword,
       displayName: "Admin User",
       bio: "Platform administrator",

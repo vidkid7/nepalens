@@ -19,11 +19,11 @@ async function main() {
   // Create admin user
   const adminPassword = await hashPassword("admin123");
   const admin = await prisma.user.upsert({
-    where: { email: "admin@pixelstock.app" },
+    where: { email: "admin@nepalens.app" },
     update: {},
     create: {
       username: "admin",
-      email: "admin@pixelstock.app",
+      email: "admin@nepalens.app",
       passwordHash: adminPassword,
       displayName: "Admin",
       isAdmin: true,
@@ -169,7 +169,7 @@ async function main() {
         userId: photographer.id,
         megapixels: (rest.width * rest.height) / 1_000_000,
         sizeTier: rest.width * rest.height > 24_000_000 ? "large" : rest.width * rest.height > 12_000_000 ? "medium" : "small",
-        originalUrl: `https://placeholder.pixelstock.app/photos/${rest.slug}.jpg`,
+        originalUrl: `https://placeholder.nepalens.app/photos/${rest.slug}.jpg`,
         viewsCount: BigInt(Math.floor(Math.random() * 50000)),
         downloadsCount: BigInt(Math.floor(Math.random() * 5000)),
         likesCount: Math.floor(Math.random() * 500),

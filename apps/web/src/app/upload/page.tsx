@@ -343,7 +343,7 @@ export default function UploadPage() {
         <div className="mb-10">
           <h1 className="text-display text-surface-900 mb-2">Upload Media</h1>
           <p className="text-body text-surface-500">
-            Share your best photos and videos with the PixelStock community
+            Share your best photos and videos with the NepaLens community
           </p>
         </div>
 

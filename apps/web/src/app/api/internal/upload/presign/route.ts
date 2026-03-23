@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getCloudinaryUploadParams } from "@pixelstock/storage";
+import { getCloudinaryUploadParams } from "@nepalens/storage";
 import { v4 as uuid } from "uuid";
 
 // POST /api/internal/upload/presign — Get Cloudinary upload params

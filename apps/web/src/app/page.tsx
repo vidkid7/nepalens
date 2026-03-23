@@ -4,7 +4,7 @@ import HomeFeed from "./HomeFeed";
 import HomeControls from "./HomeControls";
 import CategoryChips from "@/components/home/CategoryChips";
 import type { CategoryItem } from "@/components/home/CategoryChips";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { cached, CacheTTL } from "@/lib/cache";
 
 /* ─── helpers ─── */

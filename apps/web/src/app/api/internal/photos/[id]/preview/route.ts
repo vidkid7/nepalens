@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isProSubscriber } from "@/lib/subscription";
@@ -113,7 +113,7 @@ export async function GET(
   }
 }
 
-/** Generate SVG watermark with repeating diagonal "PixelStock" text */
+/** Generate SVG watermark with repeating diagonal "NepaLens" text */
 function buildWatermarkSvg(width: number, height: number): string {
   const fontSize = Math.max(Math.round(width / 14), 24);
   const spacing = fontSize * 3;
@@ -125,7 +125,7 @@ function buildWatermarkSvg(width: number, height: number): string {
     for (let c = -1; c < cols; c++) {
       const x = c * spacing + (r % 2 === 0 ? 0 : spacing / 2);
       const y = r * spacing;
-      texts += `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="white" fill-opacity="0.25" transform="rotate(-30 ${x} ${y})">PixelStock</text>`;
+      texts += `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="white" fill-opacity="0.25" transform="rotate(-30 ${x} ${y})">NepaLens</text>`;
     }
   }
 

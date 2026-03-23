@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@pixelstock/database";
+import { prisma } from "@nepalens/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { CONTENT_STATES, isValidTransition } from "@pixelstock/shared";
+import { CONTENT_STATES, isValidTransition } from "@nepalens/shared";
 
 const VALID_STATES = new Set(Object.values(CONTENT_STATES));
 
