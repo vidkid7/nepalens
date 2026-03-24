@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: process.env.NODE_ENV === "production" || process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
+  outputFileTracingIncludes: {
+    "/**": [
+      "./packages/database/node_modules/.prisma/client/**",
+      "./packages/database/node_modules/@prisma/client/**",
+    ],
+  },
   transpilePackages: [
     "@nepalens/database",
     "@nepalens/search",
