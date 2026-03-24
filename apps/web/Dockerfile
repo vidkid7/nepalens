@@ -36,12 +36,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DOCKER_BUILD=1
 RUN node node_modules/turbo/bin/turbo build --filter=@nepalens/web
 
-# Prune dev dependencies to reduce image size
-RUN npm prune --omit=dev 2>/dev/null || true
-
 # ── Stage 3: Production runner ──
 FROM node:20-alpine AS runner
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat curl
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -69,4 +66,4 @@ EXPOSE 3000
 
 WORKDIR /app/apps/web
 
-CMD ["/app/node_modules/.bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]
+CMD ["sh", "-c", "echo '=== NepaLens Startup ===' && echo \"PORT=$PORT\" && echo \"NODE_ENV=$NODE_ENV\" && echo \"HOSTNAME=$HOSTNAME\" && echo \"DATABASE_URL set: $(test -n \"$DATABASE_URL\" && echo yes || echo NO)\" && echo \"REDIS_URL set: $(test -n \"$REDIS_URL\" && echo yes || echo NO)\" && echo \"Next binary: $(ls -la /app/node_modules/.bin/next 2>&1)\" && echo \"Prisma client: $(ls /app/packages/database/node_modules/.prisma/client/*.node 2>/dev/null || echo MISSING)\" && echo '=== Starting Next.js ===' && exec /app/node_modules/.bin/next start -H 0.0.0.0 -p ${PORT:-3000}"]
