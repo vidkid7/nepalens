@@ -67,4 +67,6 @@ USER nextjs
 
 EXPOSE 3000
 
-CMD ["node_modules/.bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]
+WORKDIR /app/apps/web
+
+CMD ["/app/node_modules/.bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]
