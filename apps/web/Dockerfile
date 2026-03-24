@@ -28,7 +28,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/database/node_modules ./packages/database/node_modules
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client for Alpine Linux
 RUN node packages/database/node_modules/prisma/build/index.js generate --schema=packages/database/prisma/schema.prisma
 
 # Build all packages then the web app
@@ -36,26 +36,35 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DOCKER_BUILD=1
 RUN node node_modules/turbo/bin/turbo build --filter=@nepalens/web
 
+# Prune dev dependencies to reduce image size
+RUN npm prune --omit=dev 2>/dev/null || true
+
 # ── Stage 3: Production runner ──
 FROM node:20-alpine AS runner
-RUN apk add --no-cache libc6-compat curl
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
+ENV PORT=3000
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy built standalone output
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+# Copy entire built application (avoids standalone tracing issues)
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
 COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
+COPY --from=builder /app/apps/web/next.config.js ./apps/web/next.config.js
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/turbo.json ./turbo.json
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    chown -R nextjs:nodejs /app/apps/web/.next
 
 USER nextjs
 
 EXPOSE 3000
-ENV PORT=3000
 
-CMD ["node", "apps/web/server.js"]
+CMD ["node_modules/.bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]
