@@ -34,15 +34,15 @@ export default function HomeControls() {
 
   return (
     <nav className="sticky top-16 z-sticky bg-white/95 backdrop-blur-md border-b border-surface-100">
-      <div className="container-app flex items-center justify-center py-3">
-        <div className="flex items-center gap-1.5">
+      <div className="container-app py-3 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div className="flex items-center gap-1.5 w-max mx-auto px-4 sm:px-0">
           {TABS.map((tab) => {
             const active = tab.match(pathname, search);
             return (
               <Link
                 key={tab.label}
                 href={tab.href}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                   active
                     ? "bg-brand text-white shadow-sm"
                     : "text-surface-500 hover:text-surface-800 hover:bg-surface-100"

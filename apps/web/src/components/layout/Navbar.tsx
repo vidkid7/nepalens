@@ -67,10 +67,10 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Search bar — always visible when scrolled or not on homepage */}
+          {/* Search bar — hidden on small mobile, visible from sm+ when not on transparent homepage */}
           <div
-            className={`flex-1 max-w-xs sm:max-w-md lg:max-w-2xl transition-all duration-200 ${
-              showTransparent ? "opacity-0 pointer-events-none w-0" : "opacity-100"
+            className={`flex-1 max-w-xs sm:max-w-md lg:max-w-2xl transition-all duration-200 hidden sm:block ${
+              showTransparent ? "!hidden" : ""
             }`}
           >
             <SearchBar compact />
@@ -96,7 +96,20 @@ export default function Navbar() {
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center gap-2 ml-auto lg:ml-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 ml-auto lg:ml-0">
+            {/* Mobile search icon — only visible on small screens when search bar is hidden */}
+            {!showTransparent && (
+              <Link
+                href="/search"
+                className="sm:hidden p-2 rounded-lg text-surface-600 hover:bg-surface-100 transition-colors"
+                aria-label="Search"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </Link>
+            )}
+
             {session ? (
               <>
                 {/* Upload button */}

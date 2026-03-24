@@ -149,7 +149,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       {/* ── Feed Title + Sort + Category Chips + Main Feed ── */}
       <section className="container-app pt-8 pb-16">
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <h2 className="text-xl sm:text-2xl font-bold text-surface-900">
             Free Stock Photos &amp; Videos
           </h2>
