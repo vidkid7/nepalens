@@ -273,7 +273,7 @@ export default function ProfileContent({
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             {/* Avatar */}
-            <div className="w-36 h-36 rounded-2xl bg-white border-4 border-white overflow-hidden shadow-lg flex-shrink-0">
+            <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-2xl bg-white border-4 border-white overflow-hidden shadow-lg flex-shrink-0">
               {user.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -281,7 +281,7 @@ export default function ProfileContent({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-brand flex items-center justify-center text-white text-5xl font-bold">
+                <div className="w-full h-full bg-brand flex items-center justify-center text-white text-3xl sm:text-5xl font-bold">
                   {display.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -435,7 +435,7 @@ export default function ProfileContent({
                 hasMore={photosHasMore}
                 loading={photosLoading}
               >
-                <MasonryGrid photos={photos} columns={3} />
+                <MasonryGrid photos={photos} />
               </InfiniteScroll>
             ) : (
               <EmptyState
@@ -458,9 +458,9 @@ export default function ProfileContent({
           {/* Videos Tab */}
           {activeTab === "videos" &&
             (videosLoading ? (
-              <MasonryGridSkeleton columns={3} />
+              <MasonryGridSkeleton />
             ) : videos.length > 0 ? (
-              <MasonryGrid photos={videos} columns={3} />
+              <MasonryGrid photos={videos} />
             ) : (
               <EmptyState
                 title="No videos yet"
@@ -535,9 +535,9 @@ export default function ProfileContent({
           {activeTab === "likes" &&
             isOwnProfile &&
             (likesLoading ? (
-              <MasonryGridSkeleton columns={3} />
+              <MasonryGridSkeleton />
             ) : likes.length > 0 ? (
-              <MasonryGrid photos={likes} columns={3} />
+              <MasonryGrid photos={likes} />
             ) : (
               <EmptyState
                 title="No likes yet"
@@ -549,9 +549,9 @@ export default function ProfileContent({
           {activeTab === "downloads" &&
             isOwnProfile &&
             (downloadsLoading ? (
-              <MasonryGridSkeleton columns={3} />
+              <MasonryGridSkeleton />
             ) : downloads.length > 0 ? (
-              <MasonryGrid photos={downloads} columns={3} />
+              <MasonryGrid photos={downloads} />
             ) : (
               <EmptyState
                 title="No downloads yet"

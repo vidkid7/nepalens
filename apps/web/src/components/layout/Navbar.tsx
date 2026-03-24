@@ -69,7 +69,7 @@ export default function Navbar() {
 
           {/* Search bar — always visible when scrolled or not on homepage */}
           <div
-            className={`flex-1 max-w-2xl transition-all duration-200 ${
+            className={`flex-1 max-w-xs sm:max-w-md lg:max-w-2xl transition-all duration-200 ${
               showTransparent ? "opacity-0 pointer-events-none w-0" : "opacity-100"
             }`}
           >

@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import Avatar from "@/components/ui/Avatar";
 import MasonryGrid from "@/components/media/MasonryGrid";
 import DownloadModal from "@/components/media/DownloadModal";
@@ -175,7 +176,7 @@ export default function PhotoDetailClient({
   const showWatermark = photo.isPremium && !isPro;
 
   return (
-    <div className="pb-16">
+    <div className="pb-24 sm:pb-16">
       {/* Premium badge */}
       {photo.isPremium && (
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-1.5 text-sm font-medium">
@@ -232,7 +233,7 @@ export default function PhotoDetailClient({
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button onClick={() => toast("Save to collection coming soon", "info")} className="btn btn-sm btn-outline">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -394,9 +395,48 @@ export default function PhotoDetailClient({
         {relatedForGrid.length > 0 && (
           <div className="mt-16 pt-10 border-t border-surface-200">
             <h2 className="text-title text-surface-900 mb-6">More like this</h2>
-            <MasonryGrid photos={relatedForGrid} columns={3} />
+            <MasonryGrid photos={relatedForGrid} />
           </div>
         )}
+      </div>
+
+      {/* Mobile sticky action bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-surface-200 px-4 py-3 flex items-center justify-between gap-2 sm:hidden safe-area-bottom">
+        <div className="flex items-center gap-2">
+          <button onClick={handleLike} className={`p-2.5 rounded-xl transition-all active:scale-95 ${liked ? "bg-danger-500 text-white" : "bg-surface-100 text-surface-600"}`} aria-label={liked ? "Unlike" : "Like"}>
+            <svg className="w-5 h-5" fill={liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </button>
+          <button onClick={() => toast("Save to collection coming soon", "info")} className="p-2.5 rounded-xl bg-surface-100 text-surface-600 transition-all active:scale-95" aria-label="Collect">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          </button>
+          <button onClick={handleShare} className="p-2.5 rounded-xl bg-surface-100 text-surface-600 transition-all active:scale-95" aria-label="Share">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+          </button>
+        </div>
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className={`btn btn-md flex-1 max-w-[200px] active:scale-[0.97] ${
+            !photo.isPremium || isPro
+              ? "btn-primary"
+              : "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg px-4 py-2 font-semibold text-sm"
+          }`}
+        >
+          {downloading ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          )}
+          {!photo.isPremium ? "Free Download" : isPro ? "Pro Download" : "Download"}
+        </button>
       </div>
 
       {/* Download size modal */}

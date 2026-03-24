@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useSubscription } from "@/hooks/useSubscription";
 import SaveToCollectionModal from "@/components/collections/SaveToCollectionModal";
 import { triggerFileDownload } from "@/lib/download";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface VideoCardProps {
   video: {
@@ -38,6 +39,7 @@ export default function VideoCard({ video }: VideoCardProps) {
   const { toast } = useToast();
   const { isPro } = useSubscription();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const handleMouseEnter = () => {
     hoverTimer.current = setTimeout(() => {
@@ -173,18 +175,24 @@ export default function VideoCard({ video }: VideoCardProps) {
         </span>
       </div>
 
-      {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20" />
+      {/* Gradient overlay — always on mobile, hover on desktop */}
+      <div className={`absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/40 transition-opacity duration-300 pointer-events-none z-20 ${
+        isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+      }`} />
 
-      {/* Top-right actions on hover */}
-      <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-30"
+      {/* Top-right actions — visible on mobile, hover on desktop */}
+      <div className={`absolute top-3 right-3 flex gap-1.5 transition-all duration-200 z-30 ${
+        isMobile ? "opacity-100 translate-y-0" : "opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0"
+      }`}
         style={{ right: video.duration ? "auto" : undefined, left: video.duration ? undefined : undefined }}
       >
         {/* Actions go to the right side, below duration if present */}
       </div>
 
-      {/* Bottom actions on hover */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-end opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-30">
+      {/* Bottom actions — always visible on mobile, hover on desktop */}
+      <div className={`absolute bottom-0 left-0 right-0 p-3 flex justify-between items-end transition-all duration-200 z-30 ${
+        isMobile ? "opacity-100 translate-y-0" : "opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0"
+      }`}>
         <Link
           href={video.photographer_url || "#"}
           className="text-caption font-medium text-white hover:underline z-10 truncate max-w-[60%]"
@@ -195,7 +203,7 @@ export default function VideoCard({ video }: VideoCardProps) {
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleBookmark}
-            className="p-2 bg-white/90 backdrop-blur-sm rounded-lg text-surface-700 hover:bg-white hover:text-surface-900 transition-all shadow-sm"
+            className="p-2 bg-white/90 backdrop-blur-sm rounded-lg text-surface-700 hover:bg-white hover:text-surface-900 transition-all shadow-sm active:scale-95"
             title="Save to collection"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,7 +212,7 @@ export default function VideoCard({ video }: VideoCardProps) {
           </button>
           <button
             onClick={handleLike}
-            className={`p-2 backdrop-blur-sm rounded-lg transition-all shadow-sm ${
+            className={`p-2 backdrop-blur-sm rounded-lg transition-all shadow-sm active:scale-95 ${
               liked ? "bg-danger-500 text-white" : "bg-white/90 text-surface-700 hover:bg-white hover:text-danger-500"
             }`}
             title={liked ? "Unlike" : "Like"}
@@ -216,7 +224,7 @@ export default function VideoCard({ video }: VideoCardProps) {
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="btn btn-xs btn-white shadow-sm disabled:opacity-50"
+            className="btn btn-xs btn-white shadow-sm disabled:opacity-50 active:scale-95"
             title="Download"
           >
             {downloading ? (
@@ -226,7 +234,7 @@ export default function VideoCard({ video }: VideoCardProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
             )}
-            Download
+            <span className="hidden sm:inline">Download</span>
           </button>
         </div>
       </div>

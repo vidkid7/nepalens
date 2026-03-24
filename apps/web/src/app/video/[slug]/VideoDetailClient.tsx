@@ -290,7 +290,7 @@ export default function VideoDetailClient({
   const bestFile = video.files.length > 0 ? video.files[video.files.length - 1] : null;
 
   return (
-    <div className="pb-16">
+    <div className="pb-24 sm:pb-16">
       {/* Video Player */}
       <div className="bg-surface-950 flex items-center justify-center min-h-[50vh] max-h-[85vh]">
         <div className="relative w-full max-w-5xl mx-auto aspect-video">
@@ -369,7 +369,7 @@ export default function VideoDetailClient({
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button onClick={handleCollect} className="btn btn-sm btn-outline">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -637,6 +637,49 @@ export default function VideoDetailClient({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Mobile sticky action bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-surface-200 px-4 py-3 flex items-center justify-between gap-2 sm:hidden safe-area-bottom">
+        <div className="flex items-center gap-2">
+          <button onClick={handleLike} className={`p-2.5 rounded-xl transition-all active:scale-95 ${liked ? "bg-danger-500 text-white" : "bg-surface-100 text-surface-600"}`} aria-label={liked ? "Unlike" : "Like"}>
+            <svg className="w-5 h-5" fill={liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </button>
+          <button onClick={handleCollect} className="p-2.5 rounded-xl bg-surface-100 text-surface-600 transition-all active:scale-95" aria-label="Collect">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          </button>
+          <button onClick={handleShare} className="p-2.5 rounded-xl bg-surface-100 text-surface-600 transition-all active:scale-95" aria-label="Share">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+          </button>
+        </div>
+        <button
+          onClick={() => {
+            if (video.isPremium && !isPro) {
+              window.location.href = "/pricing";
+              return;
+            }
+            const freeQualities = ["sd", "hd"];
+            const bestFreeFile = video.files.filter(f => freeQualities.includes(f.quality)).pop();
+            handleDownload(isPro ? (bestFile?.quality || "hd") : (bestFreeFile?.quality || "sd"));
+          }}
+          disabled={downloading !== null}
+          className="btn btn-md btn-primary flex-1 max-w-[200px] active:scale-[0.97]"
+        >
+          {downloading ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          )}
+          {video.isPremium && !isPro ? "Pro Download" : "Free Download"}
+        </button>
       </div>
 
       {/* Modals */}

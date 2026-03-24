@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Safe area for mobile sticky bars (notched phones) ── */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* ── Design Tokens ── */
 :root {
   --brand: #05A081;

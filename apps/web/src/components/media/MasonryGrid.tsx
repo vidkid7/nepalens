@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback } from "react";
 import PhotoCard from "./PhotoCard";
 import VideoCard from "./VideoCard";
 
@@ -26,6 +26,30 @@ interface MasonryGridProps {
   photos: MediaItem[];
   columns?: number;
   gap?: number;
+}
+
+function useResponsiveColumns(propColumns?: number): number {
+  const [cols, setCols] = useState(propColumns ?? 3);
+
+  const compute = useCallback(() => {
+    if (propColumns) return propColumns; // respect explicit override
+    const w = window.innerWidth;
+    if (w < 480) return 1;
+    if (w < 640) return 2;
+    if (w < 1024) return 3;
+    if (w < 1536) return 4;
+    return 5;
+  }, [propColumns]);
+
+  useEffect(() => {
+    if (propColumns) { setCols(propColumns); return; }
+    setCols(compute());
+    const onResize = () => setCols(compute());
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
+  }, [propColumns, compute]);
+
+  return cols;
 }
 
 function AnimatedCard({ item, index }: { item: MediaItem; index: number }) {
@@ -67,7 +91,8 @@ function AnimatedCard({ item, index }: { item: MediaItem; index: number }) {
   );
 }
 
-export default function MasonryGrid({ photos, columns = 3, gap = 16 }: MasonryGridProps) {
+export default function MasonryGrid({ photos, columns: propColumns, gap = 16 }: MasonryGridProps) {
+  const columns = useResponsiveColumns(propColumns);
   const columnItems = useMemo(() => {
     const result: { item: MediaItem; globalIndex: number }[][] = Array.from(
       { length: columns },
